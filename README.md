@@ -40,28 +40,37 @@ regenerate.
 
 ## System architecture
 
-A **statically-exported Next.js app** — no application server. A single
-full-viewport **MapLibre GL** map sits sticky behind a column of scrolling
-narrative panels; **Scrollama** fires a chapter change as each panel enters view,
-which flies the camera to that district, highlights its boundary (dimming the
-others), reveals its landmarks, and — for Jakarta Pusat — shows the Sudirman
-congestion overlay. After the last chapter an **explore mode** unlocks free
+The **production target** is a live open-source geospatial backend: data authored in
+**QGIS**, stored in **PostGIS**, served as OGC services (**WFS / WMTS**) by
+**GeoServer**, and consumed by a **Next.js + MapLibre GL** frontend. This repository
+ships the **static-export fallback** of that frontend — the same app reading bundled
+GeoJSON from the CDN instead of GeoServer — which is what runs on Vercel today.
+
+The frontend behaves identically in both modes: a single full-viewport MapLibre map
+sits sticky behind scrolling narrative panels; **Scrollama** fires a chapter change as
+each panel enters view, flying the camera to that district, highlighting its boundary
+(dimming the others), revealing its landmarks, and — for Jakarta Pusat — showing the
+Sudirman congestion overlay. After the last chapter an **explore mode** unlocks free
 pan/zoom with layer toggles.
 
 The narrative is **data, not code**: `lib/chapters.ts` + `lib/mapViews.ts` declare
-what each chapter says, which image it shows, and where the camera goes. Components
+what each chapter says, which photos it shows, and where the camera goes. Components
 are generic.
 
 ```
-Browser (static SPA)  ──GET /data/*.geojson──▶  Vercel Edge CDN
-                      ──vector tiles───────────▶  MapTiler (OSM raster fallback)
+Production:          QGIS ─▶ PostGIS ─▶ GeoServer (WFS/WMTS) ─▶ gateway/CDN ─▶ browser
+Static (this repo):  bundled GeoJSON ─▶ Vercel Edge CDN ─▶ browser
+                     basemap tiles   ─▶ MapTiler (OSM raster fallback)
 ```
 
-**Backend is static-first, server-optional.** The data "API" is static GeoJSON
-over the CDN; the only external call is the basemap tile endpoint. A dynamic tier
-(vector tiles via PMTiles / a tile server over PostGIS, a serverless feature API,
-or ArcGIS REST) is designed but deferred until a concrete trigger — see
-[`docs/architecture.md`](docs/architecture.md) §6 for the thresholds.
+**Backend: live primary, static fallback.** In production the data "API" is GeoServer
+(WFS GeoJSON + WMTS tiles over PostGIS); the static mode serves bundled GeoJSON from the
+CDN. The MapLibre `source` abstraction means a layer reads a static `/data/*.geojson`
+file or a GeoServer endpoint with only a URL change, so the live backend can be stood up
+without touching app code. A production WebGIS needs server-side spatial queries, central
+styling, tiling, and live data (traffic); static wins on cost/ops for small, read-only
+data and offline demos. Full topology, diagrams, security, and deployment:
+[`docs/architecture.md`](docs/architecture.md) §6.
 
 ## Basemap
 
@@ -149,14 +158,18 @@ The reference, `lancastersound.wwf.ca`, is a ~2016 RequireJS SPA using **Leaflet
 raster** basemap, and **static TopoJSON/GeoJSON** data (with an optional ArcGIS REST
 path), driven by declarative JSON config across three modes — scripted *story*,
 *gallery*, and free-explore *layers*. This project keeps its best ideas (config-driven
-narrative, named camera views, static-first data, story→explore arc) and modernizes
-the stack (MapLibre + Next.js + Scrollama), uses real DOM text instead of pre-rendered
-PNG scenes, and drops the custom projection because Jakarta is equatorial.
+narrative, named camera views, a static-delivery fallback, story→explore arc) and
+modernizes the stack (MapLibre + Next.js + Scrollama over a PostGIS + GeoServer backend),
+uses real DOM text instead of pre-rendered PNG scenes, and drops the custom projection
+because Jakarta is equatorial.
 
 ## Tech stack
 
-Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 · Scrollama 3 · ngeohash ·
-Vitest + Testing Library · mapshaper/GADM for data · Vercel.
+**Frontend:** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 · Scrollama 3 ·
+ngeohash · Vitest + Testing Library · Vercel.
+**Production backend (design):** PostGIS · GeoServer (WFS/WMTS + GeoWebCache) · QGIS
+(authoring) — see [`docs/architecture.md`](docs/architecture.md) §6.
+**Data tooling:** mapshaper / GADM.
 
 ## Project structure
 
