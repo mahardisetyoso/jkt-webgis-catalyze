@@ -27,7 +27,7 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 | **PostGIS** (PostgreSQL) | Single source of truth for districts, landmarks and congestion; GiST indexes; EPSG:4326 storage | 🔜 | Read-only roles for GeoServer and CI |
 | **GeoServer** | Serves PostGIS layers as **WFS** (GeoJSON) and **WMTS**; SLD styling | 🔜 | The data API the static app calls from the browser |
 | **GeoWebCache** | Tile cache inside GeoServer | 🔜 | Pre-renders heavy / slow-changing layers |
-| **nginx gateway** | TLS, CORS, rate limiting, response cache; keeps GeoServer admin private | 🔜 | Or a Vercel rewrite `/geo/* → gateway` for same-origin calls |
+| **nginx gateway** | TLS, rate limiting, response cache; keeps GeoServer admin private | 🔜 | Reached only through the Vercel `/geo/*` rewrite |
 | **Docker Compose** | Runs `postgis`, `geoserver` and the gateway reproducibly | 🔜 | Managed alternative: RDS / Cloud SQL + a GeoServer container |
 
 ## 3. Authoring
@@ -50,7 +50,8 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 
 | Technology | Role | Status | Where |
 |---|---|---|---|
-| **Vercel** (Edge CDN) | Hosts the static app and the bundled snapshot; Git integration builds every push | ✅ | Project → Settings → Environment Variables |
+| **Vercel** (Edge CDN) | Hosts the static app and the bundled snapshot; Git integration builds every push. The single origin the browser talks to | ✅ | Project → Settings → Environment Variables |
+| **Vercel rewrite** `/geo/*` | Forwards live-data requests to the backend gateway, so the browser stays on one origin (no CORS) | 🔜 | `vercel.json` |
 | **GitHub** | Source, PR previews via Vercel | ✅ | — |
 | **Vitest + Testing Library** (jsdom) | Unit tests for chapter/camera model, paint helpers and components (70 tests) | ✅ | `tests/`, `vitest.config.ts` |
 
@@ -63,7 +64,7 @@ The frontend is the same build artifact in every mode; build-time environment va
 | Variable | Set | Empty |
 |---|---|---|
 | `NEXT_PUBLIC_MAPTILER_KEY` | MapTiler vector basemap | OSM raster, darkened |
-| `NEXT_PUBLIC_GEOSERVER_URL` 🔜 | Layers read GeoServer WFS/WMTS; snapshot is the fallback | Snapshot only (today's POC) |
+| `NEXT_PUBLIC_GEO_LIVE` 🔜 | Layers read GeoServer WFS/WMTS at `/geo/*`; snapshot is the fallback | Snapshot only (today's POC) |
 
 ## Why these, not the alternatives
 

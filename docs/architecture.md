@@ -48,15 +48,15 @@ The enabling decision: the frontend talks only to a MapLibre **`source` abstract
 flowchart LR
     user([Visitor / browser])
     cdn{{Vercel Edge CDN<br/>static app + GeoJSON snapshot}}
-    gw{{API gateway<br/>TLS · CORS · cache}}
+    gw{{API gateway<br/>TLS · rate limit · cache}}
     gs[GeoServer<br/>WFS · WMTS]
     pg[(PostGIS)]
     qgis[QGIS Desktop<br/>analysts]
     basemap[(Basemap tiles<br/>MapTiler / OSM fallback)]
     gh[(GitHub repo)]
 
-    user -->|HTML + JS| cdn
-    user -->|live data: WFS GeoJSON · WMTS tiles| gw
+    user -->|HTML + JS · /geo/* live data| cdn
+    cdn -->|/geo/* rewrite| gw
     gw --> gs
     gs -->|read-only| pg
     qgis -->|edit + publish| pg
@@ -65,7 +65,7 @@ flowchart LR
     pg -.->|ogr2ogr snapshot at build| gh
 ```
 
-The visitor's browser makes three kinds of request: the **app** (HTML/JS, plus the fallback snapshot) from the Vercel CDN, **live data** from GeoServer behind the gateway, and **basemap tiles** from the tile provider. There is still no app server in the request path — GeoServer is a data service, not a renderer of pages. In the POC, only the CDN and basemap paths exist.
+The browser talks to **one origin, Vercel**: it serves the **app** (HTML/JS, plus the fallback snapshot) from the edge and forwards **live data** requests under `/geo/*` to the gateway in front of GeoServer via a Vercel rewrite. Only **basemap tiles** go elsewhere, to the tile provider. One domain means no CORS configuration and a GeoServer address the browser never sees. There is still no app server in the request path — the rewrite is a proxy rule, and GeoServer is a data service, not a renderer of pages. In the POC, only the static files and basemap paths exist.
 
 ---
 
@@ -196,7 +196,7 @@ flowchart LR
     analyst[QGIS Desktop<br/>authoring · analysis · SLD]
     pg[(PostGIS<br/>spatial database)]
     gs[GeoServer<br/>WFS · WMS · WMTS<br/>+ GeoWebCache]
-    gw{{API gateway / CDN<br/>reverse proxy · TLS · cache · CORS}}
+    gw{{API gateway<br/>reverse proxy · TLS · cache · rate limit}}
     app[Static Next.js + MapLibre<br/>in the browser]
     feed[(Traffic feed<br/>provider / open data)]
     ci[CI: ogr2ogr snapshot<br/>→ next build]
@@ -206,11 +206,11 @@ flowchart LR
     analyst -->|publish layers + styles| gs
     gs -->|JDBC read| pg
     feed -->|ETL upsert| pg
-    app -->|WFS GeoJSON · WMTS tiles| gw
+    app -->|HTML + JS · /geo/* WFS + WMTS| cdn
+    cdn -->|/geo/* rewrite| gw
     gw --> gs
     pg -->|read-only export| ci
     ci -->|app + /data snapshot| cdn
-    cdn -->|HTML + JS| app
 ```
 
 ### 6.3 Request and update flow
@@ -218,12 +218,15 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant M as MapLibre (browser)
+    participant V as Vercel edge
     participant G as API gateway
     participant S as GeoServer
     participant P as PostGIS
-    M->>G: GET WMTS tile z/x/y (districts, thematic)
+    M->>V: GET /geo/wmts/… tile z/x/y (districts, thematic)
+    V->>G: rewrite
     G-->>M: cached tile (GeoWebCache) or render-through
-    M->>G: GET WFS GetFeature bbox=… (landmarks / congestion)
+    M->>V: GET /geo/wfs?…GetFeature bbox=… (landmarks / congestion)
+    V->>G: rewrite
     G->>S: proxy
     S->>P: SQL over GiST index (bbox + attribute filter)
     P-->>S: rows
@@ -236,12 +239,18 @@ sequenceDiagram
 - **Interactive vector layers** (districts, landmarks, congestion) → **WFS `GetFeature`** returning GeoJSON, loaded into the same MapLibre `geojson` sources. Moving from `/data/jakarta-districts.geojson` to `…/geoserver/wfs?...&outputFormat=application/json` is a URL swap.
 - **Basemap and heavy thematic layers** → **WMTS / vector tiles** from GeoServer + GeoWebCache (so large or frequently-drawn layers are pre-rendered, not re-queried per view).
 - The MapLibre `source` abstraction (already in `MapCanvas`) is what makes this swap a config change rather than a component rewrite.
-- **Endpoint selection is build-time config**, like the basemap key: a `NEXT_PUBLIC_GEOSERVER_URL` (planned) set → live layers; empty → snapshot only (today's POC). If a live request fails or times out, the layer loads the bundled snapshot instead, so the story never shows an empty map.
-- **Same-origin option:** a Vercel rewrite (`/geo/* → gateway`) lets the static app call GeoServer on its own origin, avoiding CORS configuration.
+- **Single origin via a Vercel rewrite:** the app requests live data at its own origin, `/geo/*`, and a rewrite in `vercel.json` forwards it to the gateway. Rewrites are edge proxy rules, so they work with a static export and add no serverless functions:
+
+  ```json
+  { "rewrites": [{ "source": "/geo/:path*", "destination": "https://geo.example.id/geoserver/:path*" }] }
+  ```
+
+  Trade-off: one extra hop through the Vercel edge, and live-data traffic counts toward Vercel bandwidth. GeoWebCache plus edge caching keeps the tile cost low.
+- **Live on/off is build-time config**, like the basemap key: `NEXT_PUBLIC_GEO_LIVE` (planned) set → layers read `/geo/*`; unset → snapshot only (today's POC). If a live request fails or times out, the layer loads the bundled snapshot instead, so the story never shows an empty map.
 
 ### 6.5 Gateway, security, caching, and deployment
 
-- **API gateway / reverse proxy** (nginx, a Vercel rewrite, or a cloud load balancer) sits in front of GeoServer for **TLS, CORS, rate-limiting, and response caching** — GeoServer's admin is never public.
+- **API gateway / reverse proxy** (nginx or a cloud load balancer) sits in front of GeoServer for **TLS, rate-limiting, and response caching**, and is reached only through the Vercel `/geo/*` rewrite — GeoServer's admin is never public, and no CORS policy is needed because the browser stays on one origin.
 - **Least privilege:** GeoServer connects to PostGIS with a **read-only role**; writes happen only through QGIS (authors) or the ETL job (live feed).
 - **Caching:** GeoWebCache for tiles + CDN edge caching; bounded/parameterized WFS requests to avoid unbounded scans.
 - **Deployment:** **Docker Compose** for `postgis`, `geoserver`, and the gateway (reproducible locally and on a VM); QGIS runs on each analyst's machine. Managed option: PostGIS on RDS / Cloud SQL, GeoServer on a container service or VM, tiles fronted by a CDN.
@@ -347,13 +356,13 @@ flowchart LR
         gs[GeoServer + GeoWebCache]
         gw{{nginx gateway}}
     end
-    user -->|live data| gw --> gs --> pg
+    edge -->|/geo/* rewrite| gw --> gs --> pg
 ```
 
 The frontend and backend deploy independently: the **frontend** ships through Vercel exactly as before; the **backend** runs as a Docker Compose stack (or managed PostGIS + a GeoServer container) on its own host.
 
 - **CI/CD (frontend):** GitHub → Vercel Git integration. Every push runs the snapshot export (live mode only, using a read-only PostGIS role), then `next build` (static export to `out/`), and deploys; PRs get preview URLs. In the POC the snapshot step is skipped and the committed GeoJSON is used.
-- **Hosting:** static assets on Vercel's edge CDN. No serverless functions — the live data API is GeoServer, not a Vercel function.
+- **Hosting:** static assets on Vercel's edge CDN, plus a `/geo/*` rewrite to the backend gateway. No serverless functions — the live data API is GeoServer, not a Vercel function.
 - **Caching:** hashed immutable JS/CSS assets; GeoJSON served with cache headers. Basemap tiles cached by the provider + browser.
 - **Submission:** repo on GitHub (invite `catalyzecomms`), live URL on Vercel, both emailed by 8 Nov 2026.
 
@@ -385,7 +394,7 @@ flowchart LR
 ```
 
 1. **POC (this build):** static frontend in snapshot-only mode — scripted narrative, five districts, hover-highlight, static Sudirman congestion overlay, explore mode.
-2. **v1 — stand up the backend (§6):** seed **PostGIS** with the existing scripts' sources, author and style in **QGIS**, publish through **GeoServer** (WFS + WMTS), set `NEXT_PUBLIC_GEOSERVER_URL`, and switch CI to export the snapshot from PostGIS. The frontend stays a static export; only where it reads data changes.
+2. **v1 — stand up the backend (§6):** seed **PostGIS** with the existing scripts' sources, author and style in **QGIS**, publish through **GeoServer** (WFS + WMTS), add the `/geo/*` rewrite and set `NEXT_PUBLIC_GEO_LIVE`, and switch CI to export the snapshot from PostGIS. The frontend stays a static export; only where it reads data changes.
 3. **v2:** GeoWebCache + API gateway tuning; narrative + images managed in a headless CMS with a deploy hook; EN/ID language toggle; richer explore-mode layer catalog.
 4. **v3:** **live traffic feed** replacing the static congestion sample (ETL into PostGIS, GeoServer serves fresh cells recolored by real-time speed); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
 
@@ -402,6 +411,7 @@ flowchart LR
 | Authoring | **QGIS Desktop** | ArcGIS Pro, FME, hand-coded ETL | Free, strong cartography/analysis, native PostGIS editing + GeoServer publishing |
 | Data format | WFS GeoJSON + WMTS (live) / GeoJSON snapshot (fallback) | TopoJSON, Shapefile, PMTiles | Same GeoJSON shape in both paths, so MapLibre sources are interchangeable; WMTS for heavy layers |
 | Fallback source | **`ogr2ogr` snapshot from PostGIS** at build | Separate static pipeline; no fallback | One source of truth — the fallback is a copy of the live data, not a second dataset |
+| Data entry point | **Vercel `/geo/*` rewrite** → gateway (one origin) | Browser calls the gateway's own domain (CORS) | One domain, no CORS, GeoServer address hidden; costs one edge hop and Vercel bandwidth |
 | Boundary source | **GADM 4.1** (ADM2) | geoBoundaries (CC BY), BPS, Jakarta Satu, OSM | User choice; complete IDN ADM2. Caveat: GADM restricts redistribution/commercial use (§7.1) — swap to geoBoundaries for a public/commercial build |
 | Congestion encoding | **Geohash cells** (precision 7) | GPS polyline, H3 hexagons, segment IDs | Compact, grid-aligned, trivially colorable; cells map cleanly to a GL fill layer; ngeohash is tiny |
 | Projection | Web Mercator | Custom polar stereographic (reference) | Equatorial location makes custom CRS unnecessary complexity |

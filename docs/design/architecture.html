@@ -26,6 +26,7 @@ svg{overflow:visible;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejo
 .flow>path{stroke-dasharray:6 7;animation:dash .9s linear infinite}
 .packet{width:10px;height:10px;border-radius:50%;animation:travel 4.2s cubic-bezier(.45,0,.55,1) infinite;transition:opacity .4s}
 .packet.late{animation-delay:2.1s}
+.packet.short{animation-name:travel-short}
 .node{width:220px;height:104px;padding:12px 16px;display:flex;align-items:center;text-align:left;border-radius:12px;background:#161B22;border:1px solid #30363D;font-size:14px;line-height:20px;animation:pop .55s cubic-bezier(.2,.7,.2,1) backwards;transition:opacity .4s,border-color .25s,box-shadow .25s}
 .node:hover{box-shadow:0 0 0 4px rgba(230,237,243,.06)}
 .node b{font-size:18px}
@@ -46,6 +47,7 @@ svg{overflow:visible;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejo
 @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}}
 @keyframes dash{to{stroke-dashoffset:-13}}
 @keyframes fade{from{opacity:.2}}
+@keyframes travel-short{0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(672px);opacity:0}}
 @keyframes travel{0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(972px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.node,.packet,.flow>path,#detail.swap{animation:none}.packet{display:none}}
 footer{padding:0 16px 32px;text-align:center;font-size:13px;color:#8B949E}footer a{color:#2DD4BF}
@@ -59,11 +61,12 @@ footer{padding:0 16px 32px;text-align:center;font-size:13px;color:#8B949E}footer
 <div class="lane stat b-stat" style="left:72px;top:452px;width:1168px;height:184px"></div>
 <div class="lane base" style="left:72px;top:680px;width:1520px;height:160px"></div>
 
-<div class="packet b-prod" aria-hidden="true" style="left:316px;top:295px;background:#2DD4BF;box-shadow:0 0 12px 3px rgba(45,212,191,.7)"></div>
+<div class="packet short b-prod" aria-hidden="true" style="left:316px;top:295px;background:#2DD4BF;box-shadow:0 0 12px 3px rgba(45,212,191,.7)"></div>
 <div class="packet late b-stat" aria-hidden="true" style="left:316px;top:555px;background:#FBBF24;box-shadow:0 0 12px 3px rgba(251,191,36,.7)"></div>
 
 <div id="arrows"></div>
 <svg class="flow" width="8" height="155" viewBox="0 0 8 155" style="position:absolute;left:502px;top:352px;stroke:#2DD4BF"><defs><marker id="head-snap" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none"/></marker></defs><path d="M 4 0 L 4 151" marker-end="url(#head-snap)"/></svg>
+<svg class="flow b-prod" width="8" height="155" viewBox="0 0 8 155" style="position:absolute;left:1102px;top:352px;stroke:#2DD4BF"><defs><marker id="head-geo" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none"/></marker></defs><path d="M 4 0 L 4 151" marker-end="url(#head-geo)"/></svg>
 
 <div style="left:96px;top:60px;font-size:44px;line-height:52px;font-weight:700;letter-spacing:-.02em">Diagram Arsitektur</div>
 <div style="left:96px;top:118px;font-size:16px;line-height:24px;color:#8B949E">Frontend statis di CDN, data live dari PostGIS lewat GeoServer. Klik node untuk detail.</div>
@@ -82,12 +85,12 @@ footer{padding:0 16px 32px;text-align:center;font-size:13px;color:#8B949E}footer
 <button class="node d1 b-prod" data-id="qgis" data-band="prod" style="left:96px;top:248px"><span><span class="k mono" style="color:#2DD4BF">01 · AUTHORING</span><br><b>QGIS</b><br><span class="sub">Edit &amp; styling data</span></span></button>
 <button class="node d2 b-prod" data-id="postgis" data-band="prod" style="left:396px;top:248px"><span><span class="k mono" style="color:#2DD4BF">02 · STORAGE</span><br><b>PostGIS</b><br><span class="sub">Data spasial · EPSG:4326</span></span></button>
 <button class="node d3 b-prod" data-id="geoserver" data-band="prod" style="left:696px;top:248px"><span><span class="k mono" style="color:#2DD4BF">03 · OGC SERVICES</span><br><b>GeoServer</b><br><span class="sub">WFS · WMTS · GWC</span></span></button>
-<button class="node d4 b-prod" data-id="gateway" data-band="prod" style="left:996px;top:248px"><span><span class="k mono" style="color:#2DD4BF">04 · DELIVERY</span><br><b>Gateway</b><br><span class="sub">nginx · TLS · CORS</span></span></button>
+<button class="node d4 b-prod" data-id="gateway" data-band="prod" style="left:996px;top:248px"><span><span class="k mono" style="color:#2DD4BF">04 · GATEWAY</span><br><b>Gateway</b><br><span class="sub">nginx · TLS · cache</span></span></button>
 
 <button class="node d1 b-stat" data-id="scripts" data-band="stat" style="left:96px;top:508px"><span><span class="k mono" style="color:#FBBF24">00 · SEED (POC)</span><br><b>Seed scripts</b><br><span class="sub">GADM · ngeohash</span></span></button>
 <button class="node d2 b-stat" data-id="geojson" data-band="stat" style="left:396px;top:508px"><span><span class="k mono" style="color:#FBBF24">02 · SNAPSHOT</span><br><b>GeoJSON snapshot</b><br><span class="sub">/data · fallback</span></span></button>
 <button class="node d3 b-stat" data-id="build" data-band="stat" style="left:696px;top:508px"><span><span class="k mono" style="color:#FBBF24">03 · BUILD</span><br><b>next build</b><br><span class="sub">output: export → ./out</span></span></button>
-<button class="node d4 b-stat" data-id="vercel" data-band="stat" style="left:996px;top:508px"><span><span class="k mono" style="color:#FBBF24">04 · DELIVERY</span><br><b>Vercel Edge CDN</b><br><span class="sub">Static hosting</span></span></button>
+<button class="node d4 b-stat" data-id="vercel" data-band="stat" style="left:996px;top:508px"><span><span class="k mono" style="color:#FBBF24">04 · DELIVERY</span><br><b>Vercel Edge CDN</b><br><span class="sub">Static + proxy /geo/*</span></span></button>
 
 <button class="node d5" data-id="browser" data-band="client" style="left:1296px;top:248px;width:272px;height:364px;padding:20px;align-items:flex-start;border-radius:16px;background:#1C2330;font-size:15px;line-height:26px"><span><span class="k mono">05 · CLIENT (STATIS)</span><br><b style="font-size:22px;line-height:32px">Browser</b><br><span style="color:#C9D1D9">Next.js 14 · static export<br>MapLibre GL JS 4<br>Scrollama 3<br>StoryApp · Scroller · Chapter<br>ExplorePanel</span><br><br><span class="mono" style="font-size:12px;line-height:20px;color:#8B949E">chapters.ts + mapViews.ts<br>narasi = data, bukan kode</span></span></button>
 
@@ -97,12 +100,12 @@ footer{padding:0 16px 32px;text-align:center;font-size:13px;color:#8B949E}footer
 <div class="arrow-lbl b-prod" style="left:324px;top:272px;width:64px">edit</div>
 <div class="arrow-lbl b-prod" style="left:624px;top:272px;width:64px">publish</div>
 <div class="arrow-lbl b-prod" style="left:916px;top:272px;width:80px">WFS·WMTS</div>
-<div class="arrow-lbl b-prod" style="left:1224px;top:272px;width:64px">HTTPS</div>
+<div class="arrow-lbl b-prod" style="left:1118px;top:421px;width:120px;text-align:left;color:#2DD4BF">/geo/* rewrite</div>
 <div class="arrow-lbl b-stat" style="left:316px;top:532px;width:80px">seed (POC)</div>
 <div class="arrow-lbl" style="left:518px;top:421px;width:136px;text-align:left;color:#2DD4BF">ogr2ogr snapshot</div>
 <div class="arrow-lbl b-stat" style="left:624px;top:532px;width:64px">bundle</div>
 <div class="arrow-lbl b-stat" style="left:924px;top:532px;width:64px">deploy</div>
-<div class="arrow-lbl b-stat" style="left:1224px;top:532px;width:64px">GET</div>
+<div class="arrow-lbl" style="left:1224px;top:532px;width:64px">HTTPS</div>
 <div class="arrow-lbl" style="left:1220px;top:740px;width:72px">tanpa key</div>
 <div class="arrow-lbl" style="left:1444px;top:656px;width:48px">tiles</div>
 
@@ -120,20 +123,21 @@ const NODES = {
   qgis: { band: 'prod', tag: 'DATA LIVE · AUTHORING', title: 'QGIS', body: 'Desktop GIS untuk edit dan styling. Menulis langsung ke PostGIS; gaya layer diterbitkan ke GeoServer.' },
   postgis: { band: 'prod', tag: 'DATA LIVE · STORAGE', title: 'PostGIS', body: 'Database spasial PostgreSQL. Batas lima kota, landmark dan sel kemacetan disimpan di EPSG:4326; query spasial berjalan di server.' },
   geoserver: { band: 'prod', tag: 'DATA LIVE · OGC', title: 'GeoServer', body: 'Menerbitkan tabel PostGIS sebagai WFS (GeoJSON) dan WMTS. GeoWebCache men-cache tile; styling terpusat di satu tempat.' },
-  gateway: { band: 'prod', tag: 'DATA LIVE · GATEWAY', title: 'Gateway', body: 'nginx di depan GeoServer: TLS, CORS, rate limit, dan cache respons. Admin GeoServer tidak pernah publik. Opsional: rewrite Vercel /geo/* agar satu origin.' },
+  gateway: { band: 'prod', tag: 'DATA LIVE · GATEWAY', title: 'Gateway', body: 'nginx di depan GeoServer: TLS, rate limit, dan cache respons. Hanya dipanggil oleh rewrite Vercel /geo/*, jadi browser tidak pernah melihat alamatnya dan admin GeoServer tidak pernah publik.' },
   scripts: { band: 'stat', tag: 'SEED · POC', title: 'Seed scripts', body: 'Selama PostGIS belum ada, build-districts.mjs (GADM 4.1) dan build-congestion.mjs (geohash Sudirman) mengisi snapshot langsung. Saat backend live, script ini jadi loader awal ke PostGIS.' },
   geojson: { band: 'stat', tag: 'FRONTEND STATIS · SNAPSHOT', title: 'GeoJSON snapshot', body: 'Diekspor dari PostGIS dengan ogr2ogr saat build, jadi fallback selalu sama dengan data live. Dipakai saat GeoServer tidak terjangkau dan untuk demo offline.' },
   build: { band: 'stat', tag: 'FRONTEND STATIS · BUILD', title: 'next build', body: 'output: export menghasilkan situs statis di ./out. NEXT_PUBLIC_MAPTILER_KEY di-inline saat build.' },
-  vercel: { band: 'stat', tag: 'FRONTEND STATIS · DELIVERY', title: 'Vercel Edge CDN', body: 'Menyajikan aplikasi (HTML + JS) dan snapshot GeoJSON dari edge. Tetap statis walau data sudah live: tidak ada server aplikasi.' },
-  browser: { band: 'client', tag: 'KLIEN · STATIS', title: 'Browser', body: 'Aplikasi statis dari CDN mengambil data live dari GeoServer (WFS/WMTS); bila gagal, source MapLibre memuat snapshot /data/*.geojson. Scrollama memicu chapter → flyTo, highlight distrik, landmark, overlay Sudirman.' },
+  vercel: { band: 'stat', tag: 'FRONTEND STATIS · DELIVERY', title: 'Vercel Edge CDN', body: 'Satu pintu masuk browser: menyajikan aplikasi (HTML + JS) dan snapshot dari edge, lalu meneruskan /geo/* ke gateway lewat rewrite. Satu domain, tanpa CORS, dan tetap tanpa server aplikasi.' },
+  browser: { band: 'client', tag: 'KLIEN · STATIS', title: 'Browser', body: 'Semua request ke satu origin Vercel: aplikasi, snapshot, dan data live di /geo/* (WFS/WMTS dari GeoServer). Bila /geo gagal, source MapLibre memuat snapshot /data/*.geojson. Scrollama memicu chapter → flyTo, highlight distrik, landmark, overlay Sudirman.' },
   osm: { band: 'base', tag: 'BASEMAP · FALLBACK', title: 'OSM raster', body: 'Dipakai saat NEXT_PUBLIC_MAPTILER_KEY kosong: tile OpenStreetMap standar yang digelapkan, untuk dev lokal dan preview.' },
   maptiler: { band: 'base', tag: 'BASEMAP', title: 'MapTiler', body: 'Basemap vektor dataviz-dark dengan key dibatasi domain. Layer cerita disisipkan di bawah label pertama agar nama jalan tetap terbaca.' }
 };
 
 // Straight arrows: [x, y, length, color, band, horizontal?, flow?, dashed?]
 const ARROWS = [
-  ...[316, 616, 916, 1216].map((x) => [x, 300, 79, C.prod, 'prod', true, true]),
-  ...[316, 616, 916, 1216].map((x) => [x, 560, 79, C.stat, 'stat', true, true]),
+  ...[316, 616, 916].map((x) => [x, 300, 79, C.prod, 'prod', true, true]),
+  ...[316, 616, 916].map((x) => [x, 560, 79, C.stat, 'stat', true, true]),
+  [1216, 560, 79, C.stat, '', true, true],
   [1216, 768, 79, '#8B949E', '', true, false, true],
   [1432, 613, 103, C.base, '', false, true]
 ];

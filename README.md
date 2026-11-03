@@ -48,7 +48,9 @@ _Interactive version (animated data flow, live/static mode toggle, click a node 
 **Static frontend, live geospatial backend.** The app is a **Next.js static export** on
 the Vercel CDN — no app server, now or in production. The *data* is live: authored in
 **QGIS**, stored in **PostGIS**, and served by **GeoServer** as OGC services
-(**WFS / WMTS**), which the static app fetches from the browser. At build time a
+(**WFS / WMTS**), which the static app fetches from the browser at `/geo/*` on its own
+origin — a Vercel rewrite forwards those requests to the gateway, so there is one domain
+and no CORS. At build time a
 **GeoJSON snapshot is exported from PostGIS** and bundled as the fallback, so the map
 still works when GeoServer is down and the fallback never drifts from the live data.
 
@@ -68,7 +70,7 @@ are generic.
 
 ```
 App (always):   next build ─▶ Vercel Edge CDN ─▶ browser            (HTML + JS)
-Live data:      QGIS ─▶ PostGIS ─▶ GeoServer (WFS/WMTS) ─▶ gateway ─▶ browser
+Live data:      QGIS ─▶ PostGIS ─▶ GeoServer (WFS/WMTS) ─▶ gateway ─▶ Vercel /geo/* rewrite ─▶ browser
 Fallback data:  PostGIS ─▶ ogr2ogr snapshot ─▶ /data/*.geojson (bundled at build)
                 (this repo: seeded by scripts/ from GADM until PostGIS exists)
 Basemap:        MapTiler (OSM raster fallback) ─▶ browser
@@ -181,7 +183,7 @@ status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 **Frontend (static, in repo):** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 ·
 Scrollama 3 · MapTiler · Vitest + Testing Library · Vercel.
 **Live data backend (designed, not stood up yet):** PostGIS · GeoServer (WFS/WMTS +
-GeoWebCache) · nginx gateway · Docker Compose — see [`docs/architecture.md`](docs/architecture.md) §6.
+GeoWebCache) · nginx gateway behind a Vercel `/geo/*` rewrite · Docker Compose — see [`docs/architecture.md`](docs/architecture.md) §6.
 **Authoring:** QGIS Desktop (edits PostGIS, publishes styles to GeoServer).
 **Data tooling:** GADM 4.1 · mapshaper · ngeohash (in repo) · GDAL `ogr2ogr` for the
 PostGIS → GeoJSON snapshot (live mode).
