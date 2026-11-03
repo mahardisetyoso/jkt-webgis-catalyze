@@ -40,6 +40,11 @@ regenerate.
 
 ## System architecture
 
+[![Architecture diagram: production lane (QGIS → PostGIS → GeoServer → Gateway/CDN), static lane (data scripts → GeoJSON → next build → Vercel), and basemap lane (MapTiler with OSM fallback), all feeding the Next.js + MapLibre browser client](docs/design/architecture.png)](docs/design/architecture.html)
+
+_Interactive version (animated data flow, Production/Static mode toggle, click a node for details):
+[`docs/design/architecture.html`](docs/design/architecture.html) — open it locally in a browser._
+
 The **production target** is a live open-source geospatial backend: data authored in
 **QGIS**, stored in **PostGIS**, served as OGC services (**WFS / WMTS**) by
 **GeoServer**, and consumed by a **Next.js + MapLibre GL** frontend. This repository
@@ -164,6 +169,11 @@ uses real DOM text instead of pre-rendered PNG scenes, and drops the custom proj
 because Jakarta is equatorial.
 
 ## Tech stack
+
+[![Tech stack: 13 technologies grouped into Frontend, Production backend, Data, and Deploy & QA layers](docs/design/tech-stack.png)](docs/design/tech-stack.html)
+
+_Interactive version (layer filter, click a card for its role and rationale):
+[`docs/design/tech-stack.html`](docs/design/tech-stack.html)._
 
 **Frontend:** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 · Scrollama 3 ·
 ngeohash · Vitest + Testing Library · Vercel.
