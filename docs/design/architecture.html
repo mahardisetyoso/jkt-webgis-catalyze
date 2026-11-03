@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagram Arsitektur — Jakarta WebGIS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#0D1117;color:#E6EDF3;font-family:'Space Grotesk',system-ui,sans-serif}
+body{overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+#fit{width:100%;overflow:hidden}
+#stage{position:relative;width:1664px;height:1064px;transform-origin:0 0}
+#stage>*{position:absolute}
+.lane{border-radius:16px;transition:opacity .4s}
+.lane.prod{border:1px dashed rgba(45,212,191,.3);background:rgba(45,212,191,.035)}
+.lane.stat{border:1px dashed rgba(251,191,36,.3);background:rgba(251,191,36,.035)}
+.lane.base{border:1px dashed rgba(168,179,191,.25);background:rgba(168,179,191,.03)}
+.lbl{font-size:12px;line-height:16px;letter-spacing:.08em}
+.arrow-lbl{font-size:13px;line-height:16px;color:#8B949E;text-align:center}
+svg{overflow:visible;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:opacity .4s}
+.flow>path{stroke-dasharray:6 7;animation:dash .9s linear infinite}
+.packet{width:10px;height:10px;border-radius:50%;animation:travel 4.2s cubic-bezier(.45,0,.55,1) infinite;transition:opacity .4s}
+.packet.late{animation-delay:2.1s}
+.node{width:220px;height:104px;padding:12px 16px;display:flex;align-items:center;text-align:left;border-radius:12px;background:#161B22;border:1px solid #30363D;font-size:14px;line-height:20px;animation:pop .55s cubic-bezier(.2,.7,.2,1) backwards;transition:opacity .4s,border-color .25s,box-shadow .25s}
+.node:hover{box-shadow:0 0 0 4px rgba(230,237,243,.06)}
+.node b{font-size:18px}
+.k{font-size:11px;letter-spacing:.08em}
+.sub{color:#8B949E}
+.node.sel[data-band="prod"]{border-color:#2DD4BF}
+.node.sel[data-band="stat"]{border-color:#FBBF24}
+.node.sel[data-band="base"]{border-color:#A8B3BF}
+.node.sel[data-band="client"]{border-color:#E6EDF3}
+.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.5s}.d6{animation-delay:.65s}
+.mode-prod .b-stat,.mode-stat .b-prod{opacity:.18}
+.tabs{display:flex;gap:6px;padding:6px;background:#161B22;border:1px solid #30363D;border-radius:14px}
+.tab{min-height:44px;padding:0 16px;border:0;border-radius:10px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;background:transparent;color:#8B949E;transition:background .2s,color .2s}
+.tab[aria-pressed="true"]{background:#2D333B;color:#E6EDF3}
+.tab i{width:8px;height:8px;border-radius:50%}
+#detail{left:96px;top:880px;width:1472px;height:120px;padding:20px 28px;background:#161B22;border:1px solid #30363D;border-radius:16px;display:flex;align-items:center;gap:28px}
+#detail.swap{animation:fade .4s ease}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}}
+@keyframes dash{to{stroke-dashoffset:-13}}
+@keyframes fade{from{opacity:.2}}
+@keyframes travel{0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(972px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.node,.packet,.flow>path,#detail.swap{animation:none}.packet{display:none}}
+footer{padding:0 16px 32px;text-align:center;font-size:13px;color:#8B949E}footer a{color:#2DD4BF}
+</style>
+</head>
+<body>
+<div id="fit">
+<div id="stage">
+
+<div class="lane prod b-prod" style="left:72px;top:200px;width:1168px;height:184px"></div>
+<div class="lane stat b-stat" style="left:72px;top:452px;width:1168px;height:184px"></div>
+<div class="lane base" style="left:72px;top:680px;width:1520px;height:160px"></div>
+
+<div class="packet b-prod" aria-hidden="true" style="left:316px;top:295px;background:#2DD4BF;box-shadow:0 0 12px 3px rgba(45,212,191,.7)"></div>
+<div class="packet late b-stat" aria-hidden="true" style="left:316px;top:555px;background:#FBBF24;box-shadow:0 0 12px 3px rgba(251,191,36,.7)"></div>
+
+<div id="arrows"></div>
+
+<div style="left:96px;top:60px;font-size:44px;line-height:52px;font-weight:700;letter-spacing:-.02em">Diagram Arsitektur</div>
+<div style="left:96px;top:118px;font-size:16px;line-height:24px;color:#8B949E">Klik node untuk detail. Ganti mode untuk melihat jalur data produksi atau statis.</div>
+<div class="tabs" role="group" aria-label="Mode arsitektur" style="right:96px;top:72px">
+  <button class="tab" data-mode="all" aria-pressed="true"><i style="background:#E6EDF3"></i>Semua</button>
+  <button class="tab" data-mode="prod" aria-pressed="false"><i style="background:#2DD4BF"></i>Produksi</button>
+  <button class="tab" data-mode="stat" aria-pressed="false"><i style="background:#FBBF24"></i>Statis</button>
+</div>
+
+<div class="lbl mono b-prod" style="left:96px;top:214px;color:#2DD4BF">PRODUKSI · LIVE BACKEND (DESAIN)</div>
+<div class="lbl mono b-stat" style="left:96px;top:466px;color:#FBBF24">STATIS · REPO INI, BERJALAN DI VERCEL</div>
+<div class="lbl mono" style="left:96px;top:694px;color:#A8B3BF">BASEMAP</div>
+<div class="lbl mono" style="left:1296px;top:214px">KLIEN</div>
+<div style="left:96px;top:744px;width:760px;font-size:20px;line-height:28px;color:#8B949E">Basemap adalah konfigurasi, bukan kode. Satu variabel lingkungan memilih vektor MapTiler atau raster OSM — <span class="mono" style="font-size:16px;color:#C9D1D9">lib/basemap.ts</span></div>
+
+<button class="node d1 b-prod" data-id="qgis" data-band="prod" style="left:96px;top:248px"><span><span class="k mono" style="color:#2DD4BF">01 · AUTHORING</span><br><b>QGIS</b><br><span class="sub">Edit &amp; styling data</span></span></button>
+<button class="node d2 b-prod" data-id="postgis" data-band="prod" style="left:396px;top:248px"><span><span class="k mono" style="color:#2DD4BF">02 · STORAGE</span><br><b>PostGIS</b><br><span class="sub">Data spasial · EPSG:4326</span></span></button>
+<button class="node d3 b-prod" data-id="geoserver" data-band="prod" style="left:696px;top:248px"><span><span class="k mono" style="color:#2DD4BF">03 · OGC SERVICES</span><br><b>GeoServer</b><br><span class="sub">WFS · WMTS · GWC</span></span></button>
+<button class="node d4 b-prod" data-id="gateway" data-band="prod" style="left:996px;top:248px"><span><span class="k mono" style="color:#2DD4BF">04 · DELIVERY</span><br><b>Gateway / CDN</b><br><span class="sub">Cache · HTTPS</span></span></button>
+
+<button class="node d1 b-stat" data-id="scripts" data-band="stat" style="left:96px;top:508px"><span><span class="k mono" style="color:#FBBF24">01 · PIPELINE</span><br><b>Data scripts</b><br><span class="sub">GADM · mapshaper · ngeohash</span></span></button>
+<button class="node d2 b-stat" data-id="geojson" data-band="stat" style="left:396px;top:508px"><span><span class="k mono" style="color:#FBBF24">02 · BUNDLED DATA</span><br><b>GeoJSON</b><br><span class="sub">public/data/*.geojson</span></span></button>
+<button class="node d3 b-stat" data-id="build" data-band="stat" style="left:696px;top:508px"><span><span class="k mono" style="color:#FBBF24">03 · BUILD</span><br><b>next build</b><br><span class="sub">output: export → ./out</span></span></button>
+<button class="node d4 b-stat" data-id="vercel" data-band="stat" style="left:996px;top:508px"><span><span class="k mono" style="color:#FBBF24">04 · DELIVERY</span><br><b>Vercel Edge CDN</b><br><span class="sub">Static hosting</span></span></button>
+
+<button class="node d5" data-id="browser" data-band="client" style="left:1296px;top:248px;width:272px;height:364px;padding:20px;align-items:flex-start;border-radius:16px;background:#1C2330;font-size:15px;line-height:26px"><span><span class="k mono">05 · CLIENT</span><br><b style="font-size:22px;line-height:32px">Browser</b><br><span style="color:#C9D1D9">Next.js 14 · static export<br>MapLibre GL JS 4<br>Scrollama 3<br>StoryApp · Scroller · Chapter<br>ExplorePanel</span><br><br><span class="mono" style="font-size:12px;line-height:20px;color:#8B949E">chapters.ts + mapViews.ts<br>narasi = data, bukan kode</span></span></button>
+
+<button class="node d6" data-id="osm" data-band="base" style="left:996px;top:716px"><span><span class="k mono" style="color:#A8B3BF">FALLBACK</span><br><b>OSM raster</b><br><span class="sub">Digelapkan · dev lokal</span></span></button>
+<button class="node d6" data-id="maptiler" data-band="base" style="left:1296px;top:716px;width:272px"><span><span class="k mono" style="color:#A8B3BF">BASEMAP</span><br><b>MapTiler</b><br><span class="sub">Vektor dataviz-dark</span></span></button>
+
+<div class="arrow-lbl b-prod" style="left:324px;top:272px;width:64px">edit</div>
+<div class="arrow-lbl b-prod" style="left:624px;top:272px;width:64px">publish</div>
+<div class="arrow-lbl b-prod" style="left:916px;top:272px;width:80px">WFS·WMTS</div>
+<div class="arrow-lbl b-prod" style="left:1224px;top:272px;width:64px">HTTPS</div>
+<div class="arrow-lbl b-stat" style="left:320px;top:532px;width:72px">generate</div>
+<div class="arrow-lbl b-stat" style="left:624px;top:532px;width:64px">bundle</div>
+<div class="arrow-lbl b-stat" style="left:924px;top:532px;width:64px">deploy</div>
+<div class="arrow-lbl b-stat" style="left:1224px;top:532px;width:64px">GET</div>
+<div class="arrow-lbl" style="left:1220px;top:740px;width:72px">tanpa key</div>
+<div class="arrow-lbl" style="left:1444px;top:656px;width:48px">tiles</div>
+
+<div id="detail" aria-live="polite">
+  <span id="dBar" style="flex:none;width:6px;height:72px;border-radius:3px"></span>
+  <span style="flex:none;width:260px;display:flex;flex-direction:column;gap:4px"><span id="dTag" class="mono" style="font-size:12px;letter-spacing:.08em"></span><span id="dTitle" style="font-size:24px;font-weight:700;line-height:30px"></span></span>
+  <span id="dBody" style="font-size:16px;line-height:24px;color:#C9D1D9"></span>
+</div>
+</div>
+</div>
+<footer><a href="tech-stack.html">← Tech Stack</a></footer>
+<script>
+const C = { prod: '#2DD4BF', stat: '#FBBF24', base: '#A8B3BF', client: '#E6EDF3' };
+const NODES = {
+  qgis: { band: 'prod', tag: 'PRODUKSI · AUTHORING', title: 'QGIS', body: 'Desktop GIS untuk edit dan styling. Menulis langsung ke PostGIS; gaya layer diterbitkan ke GeoServer.' },
+  postgis: { band: 'prod', tag: 'PRODUKSI · STORAGE', title: 'PostGIS', body: 'Database spasial PostgreSQL. Batas lima kota, landmark dan sel kemacetan disimpan di EPSG:4326; query spasial berjalan di server.' },
+  geoserver: { band: 'prod', tag: 'PRODUKSI · OGC', title: 'GeoServer', body: 'Menerbitkan tabel PostGIS sebagai WFS (GeoJSON) dan WMTS. GeoWebCache men-cache tile; styling terpusat di satu tempat.' },
+  gateway: { band: 'prod', tag: 'PRODUKSI · DELIVERY', title: 'Gateway / CDN', body: 'Satu pintu publik di depan GeoServer: cache respons dan tile, HTTPS, dan pembatasan akses.' },
+  scripts: { band: 'stat', tag: 'STATIS · PIPELINE', title: 'Data scripts', body: 'build-districts.mjs: GADM 4.1 difilter ke JakartaRaya, koordinat dibulatkan ~1 m. build-congestion.mjs: sampel Jl. Sudirman → sel geohash presisi 7 (~150 m).' },
+  geojson: { band: 'stat', tag: 'STATIS · BUNDLED DATA', title: 'GeoJSON', body: 'jakarta-districts (~13 KB), landmarks, dan congestion. Di-commit ke repo, jadi npm run dev jalan tanpa langkah data.' },
+  build: { band: 'stat', tag: 'STATIS · BUILD', title: 'next build', body: 'output: export menghasilkan situs statis di ./out. NEXT_PUBLIC_MAPTILER_KEY di-inline saat build.' },
+  vercel: { band: 'stat', tag: 'STATIS · DELIVERY', title: 'Vercel Edge CDN', body: 'Menyajikan HTML, JS dan GeoJSON statis dari edge, tanpa server aplikasi. Inilah yang berjalan hari ini.' },
+  browser: { band: 'client', tag: 'KLIEN', title: 'Browser', body: 'Peta sticky di belakang panel scroll. Scrollama memicu chapter → flyTo kamera, highlight distrik, landmark, overlay Sudirman. Source MapLibre membaca /data/*.geojson atau URL GeoServer: hanya URL yang berubah.' },
+  osm: { band: 'base', tag: 'BASEMAP · FALLBACK', title: 'OSM raster', body: 'Dipakai saat NEXT_PUBLIC_MAPTILER_KEY kosong: tile OpenStreetMap standar yang digelapkan, untuk dev lokal dan preview.' },
+  maptiler: { band: 'base', tag: 'BASEMAP', title: 'MapTiler', body: 'Basemap vektor dataviz-dark dengan key dibatasi domain. Layer cerita disisipkan di bawah label pertama agar nama jalan tetap terbaca.' }
+};
+
+// Straight arrows: [x, y, length, color, band, horizontal?, flow?, dashed?]
+const ARROWS = [
+  ...[316, 616, 916, 1216].map((x) => [x, 300, 79, C.prod, 'prod', true, true]),
+  ...[316, 616, 916, 1216].map((x) => [x, 560, 79, C.stat, 'stat', true, true]),
+  [1216, 768, 79, '#8B949E', '', true, false, true],
+  [1432, 613, 103, C.base, '', false, true]
+];
+const ns = 'http://www.w3.org/2000/svg';
+ARROWS.forEach(([x, y, n, color, band, horiz, flow, dashed], i) => {
+  const id = 'head-' + i;
+  const w = horiz ? n : 8, h = horiz ? 8 : n;
+  const d = horiz ? `M 0 4 L ${n - 4} 4` : `M 4 ${n} L 4 4`; // right / up
+  const el = document.createElement('div');
+  el.innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="${flow ? 'flow ' : ''}${band ? 'b-' + band : ''}"
+    style="position:absolute;left:${horiz ? x : x - 4}px;top:${horiz ? y - 4 : y}px;stroke:${color};${dashed ? 'stroke-dasharray:6 6;' : ''}">
+    <defs><marker id="${id}" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="${color}" stroke="none"/></marker></defs>
+    <path d="${d}" marker-end="url(#${id})"/></svg>`;
+  document.getElementById('arrows').appendChild(el.firstElementChild);
+});
+
+const stage = document.getElementById('stage');
+let sel = 'browser';
+function select(id) {
+  sel = id;
+  document.querySelectorAll('.node').forEach((b) => {
+    b.classList.toggle('sel', b.dataset.id === id);
+    b.setAttribute('aria-pressed', String(b.dataset.id === id));
+  });
+  const n = NODES[id];
+  document.getElementById('dBar').style.background = C[n.band];
+  const tag = document.getElementById('dTag');
+  tag.textContent = n.tag; tag.style.color = C[n.band];
+  document.getElementById('dTitle').textContent = n.title;
+  document.getElementById('dBody').textContent = n.body;
+  const d = document.getElementById('detail');
+  d.classList.remove('swap'); void d.offsetWidth; d.classList.add('swap');
+}
+document.querySelectorAll('.node').forEach((b) => b.addEventListener('click', () => select(b.dataset.id)));
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
+  stage.classList.remove('mode-prod', 'mode-stat');
+  if (b.dataset.mode !== 'all') stage.classList.add('mode-' + b.dataset.mode);
+  document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-pressed', String(t === b)));
+}));
+select(sel);
+
+// Scale the fixed 1664×1064 stage to the viewport width.
+const fit = document.getElementById('fit');
+function rescale() {
+  const s = Math.min(1, fit.clientWidth / 1664);
+  stage.style.transform = `scale(${s})`;
+  fit.style.height = 1064 * s + 'px';
+}
+addEventListener('resize', rescale);
+rescale();
+</script>
+</body>
+</html>

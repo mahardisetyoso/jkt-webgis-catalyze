@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Diagram Arsitektur</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1117}
+a{color:#2DD4BF}a:hover{color:#5EEAD4}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
+.node{animation:pop .55s cubic-bezier(.2,.7,.2,1) backwards;transition:opacity .4s ease,border-color .25s ease,box-shadow .25s ease}
+.node:hover{box-shadow:0 0 0 4px rgba(230,237,243,.06)}
+.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.5s}.d6{animation-delay:.65s}
+.lane{transition:opacity .4s ease}
+svg{transition:opacity .4s ease}
+.flow > path{stroke-dasharray:6 7;animation:dash .9s linear infinite}
+.packet{animation:travel 4.2s cubic-bezier(.45,0,.55,1) infinite;transition:opacity .4s ease}
+.packet.late{animation-delay:2.1s}
+.tab{transition:background .2s ease,color .2s ease}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}}
+@keyframes dash{to{stroke-dashoffset:-13}}
+@keyframes travel{0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(972px);opacity:0}}
+@media (prefers-reduced-motion: reduce){.node,.packet,.flow > path{animation:none}.packet{display:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 1664px; height: 1064px; background: #0D1117; color: #E6EDF3; font-family: 'Space Grotesk', system-ui, sans-serif">
+
+<div class="lane" style="position: absolute; left: 72px; top: 200px; width: 1168px; height: 184px; box-sizing: border-box; border: 1px dashed rgba(45,212,191,0.3); background: rgba(45,212,191,0.035); border-radius: 16px; opacity: {{op.prod}}"></div>
+<div class="lane" style="position: absolute; left: 72px; top: 452px; width: 1168px; height: 184px; box-sizing: border-box; border: 1px dashed rgba(251,191,36,0.3); background: rgba(251,191,36,0.035); border-radius: 16px; opacity: {{op.stat}}"></div>
+<div class="lane" style="position: absolute; left: 72px; top: 680px; width: 1520px; height: 160px; box-sizing: border-box; border: 1px dashed rgba(168,179,191,0.25); background: rgba(168,179,191,0.03); border-radius: 16px"></div>
+
+<div class="packet" aria-hidden="true" style="position: absolute; left: 316px; top: 295px; width: 10px; height: 10px; border-radius: 50%; background: #2DD4BF; box-shadow: 0 0 12px 3px rgba(45,212,191,0.7); opacity: {{op.prod}}"></div>
+<div class="packet late" aria-hidden="true" style="position: absolute; left: 316px; top: 555px; width: 10px; height: 10px; border-radius: 50%; background: #FBBF24; box-shadow: 0 0 12px 3px rgba(251,191,36,0.7); opacity: {{op.stat}}"></div>
+
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 316px; top: 296px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #2DD4BF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.prod}}"><defs><marker id="dc-arrow-head-filled-1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none" style="stroke: none; fill: #2DD4BF; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-1)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 616px; top: 296px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #2DD4BF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.prod}}"><defs><marker id="dc-arrow-head-filled-2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none" style="stroke: none; fill: #2DD4BF; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-2)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 916px; top: 296px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #2DD4BF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.prod}}"><defs><marker id="dc-arrow-head-filled-3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none" style="stroke: none; fill: #2DD4BF; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-3)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 1216px; top: 296px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #2DD4BF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.prod}}"><defs><marker id="dc-arrow-head-filled-4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#2DD4BF" stroke="none" style="stroke: none; fill: #2DD4BF; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-4)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 316px; top: 556px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #FBBF24; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.stat}}"><defs><marker id="dc-arrow-head-filled-5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#FBBF24" stroke="none" style="stroke: none; fill: #FBBF24; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-5)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 616px; top: 556px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #FBBF24; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.stat}}"><defs><marker id="dc-arrow-head-filled-6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#FBBF24" stroke="none" style="stroke: none; fill: #FBBF24; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-6)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 916px; top: 556px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #FBBF24; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.stat}}"><defs><marker id="dc-arrow-head-filled-7" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#FBBF24" stroke="none" style="stroke: none; fill: #FBBF24; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-7)"></path></svg>
+<svg class="flow" width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 1216px; top: 556px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #FBBF24; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: {{op.stat}}"><defs><marker id="dc-arrow-head-filled-8" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#FBBF24" stroke="none" style="stroke: none; fill: #FBBF24; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-8)"></path></svg>
+<svg width="79" height="8" viewBox="0 0 79 8" preserveAspectRatio="none" style="position: absolute; left: 1216px; top: 764px; width: 79px; height: 8px; overflow: visible; fill: none; stroke: #8B949E; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 6 6"><defs><marker id="dc-arrow-head-filled-9" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8B949E" stroke="none" style="stroke: none; fill: #8B949E; fill: context-stroke"/></marker></defs><path d="M 0 4 L 75 4" marker-end="url(#dc-arrow-head-filled-9)"></path></svg>
+<svg class="flow" width="8" height="103" viewBox="0 0 8 103" preserveAspectRatio="none" style="position: absolute; left: 1428px; top: 613px; width: 8px; height: 103px; overflow: visible; fill: none; stroke: #A8B3BF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-10" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#A8B3BF" stroke="none" style="stroke: none; fill: #A8B3BF; fill: context-stroke"/></marker></defs><path d="M 4 103 L 4 4" marker-end="url(#dc-arrow-head-filled-10)"></path></svg>
+
+<div style="position: absolute; left: 96px; top: 60px; font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em">Diagram Arsitektur</div>
+<div style="position: absolute; left: 96px; top: 118px; font-size: 16px; line-height: 24px; color: #8B949E">Klik node untuk detail. Ganti mode untuk melihat jalur data produksi atau statis.</div>
+<div role="group" aria-label="Mode arsitektur" style="position: absolute; right: 96px; top: 72px; display: flex; gap: 6px; padding: 6px; background: #161B22; border: 1px solid #30363D; border-radius: 14px">
+  <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+    <button class="tab" aria-pressed="{{t.active}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; background: {{t.bg}}; color: {{t.fg}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.color}}"></span>{{t.label}}</button>
+  </sc-for>
+</div>
+
+<div style="position: absolute; left: 96px; top: 214px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; letter-spacing: 0.08em; color: #2DD4BF; opacity: {{op.prod}}">PRODUKSI · LIVE BACKEND (DESAIN)</div>
+<div style="position: absolute; left: 96px; top: 466px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; letter-spacing: 0.08em; color: #FBBF24; opacity: {{op.stat}}">STATIS · REPO INI, BERJALAN DI VERCEL</div>
+<div style="position: absolute; left: 96px; top: 694px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; letter-spacing: 0.08em; color: #A8B3BF">BASEMAP</div>
+<div style="position: absolute; left: 1296px; top: 214px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; letter-spacing: 0.08em; color: #E6EDF3">KLIEN</div>
+<div style="position: absolute; left: 96px; top: 744px; width: 760px; font-size: 20px; line-height: 28px; color: #8B949E">Basemap adalah konfigurasi, bukan kode. Satu variabel lingkungan memilih vektor MapTiler atau raster OSM — <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #C9D1D9">lib/basemap.ts</span></div>
+
+<button class="node d1" onClick="{{p.qgis}}" style="position: absolute; left: 96px; top: 248px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.qgis}}; opacity: {{op.prod}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #2DD4BF">01 · AUTHORING</span><br><b style="font-size: 18px">QGIS</b><br><span style="color: #8B949E">Edit &amp; styling data</span></span></button>
+<button class="node d2" onClick="{{p.postgis}}" style="position: absolute; left: 396px; top: 248px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.postgis}}; opacity: {{op.prod}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #2DD4BF">02 · STORAGE</span><br><b style="font-size: 18px">PostGIS</b><br><span style="color: #8B949E">Data spasial · EPSG:4326</span></span></button>
+<button class="node d3" onClick="{{p.geoserver}}" style="position: absolute; left: 696px; top: 248px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.geoserver}}; opacity: {{op.prod}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #2DD4BF">03 · OGC SERVICES</span><br><b style="font-size: 18px">GeoServer</b><br><span style="color: #8B949E">WFS · WMTS · GWC</span></span></button>
+<button class="node d4" onClick="{{p.gateway}}" style="position: absolute; left: 996px; top: 248px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.gateway}}; opacity: {{op.prod}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #2DD4BF">04 · DELIVERY</span><br><b style="font-size: 18px">Gateway / CDN</b><br><span style="color: #8B949E">Cache · HTTPS</span></span></button>
+
+<button class="node d1" onClick="{{p.scripts}}" style="position: absolute; left: 96px; top: 508px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.scripts}}; opacity: {{op.stat}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #FBBF24">01 · PIPELINE</span><br><b style="font-size: 18px">Data scripts</b><br><span style="color: #8B949E">GADM · mapshaper · ngeohash</span></span></button>
+<button class="node d2" onClick="{{p.geojson}}" style="position: absolute; left: 396px; top: 508px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.geojson}}; opacity: {{op.stat}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #FBBF24">02 · BUNDLED DATA</span><br><b style="font-size: 18px">GeoJSON</b><br><span style="color: #8B949E">public/data/*.geojson</span></span></button>
+<button class="node d3" onClick="{{p.build}}" style="position: absolute; left: 696px; top: 508px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.build}}; opacity: {{op.stat}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #FBBF24">03 · BUILD</span><br><b style="font-size: 18px">next build</b><br><span style="color: #8B949E">output: export → ./out</span></span></button>
+<button class="node d4" onClick="{{p.vercel}}" style="position: absolute; left: 996px; top: 508px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.vercel}}; opacity: {{op.stat}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #FBBF24">04 · DELIVERY</span><br><b style="font-size: 18px">Vercel Edge CDN</b><br><span style="color: #8B949E">Static hosting</span></span></button>
+
+<button class="node d5" onClick="{{p.browser}}" style="position: absolute; left: 1296px; top: 248px; width: 272px; height: 364px; box-sizing: border-box; padding: 20px; display: flex; align-items: flex-start; text-align: left; border-radius: 16px; background: #1C2330; border: 1px solid {{ring.browser}}; font-size: 15px; line-height: 26px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #E6EDF3">05 · CLIENT</span><br><b style="font-size: 22px; line-height: 32px">Browser</b><br><span style="color: #C9D1D9">Next.js 14 · static export<br>MapLibre GL JS 4<br>Scrollama 3<br>StoryApp · Scroller · Chapter<br>ExplorePanel</span><br><br><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 20px; color: #8B949E">chapters.ts + mapViews.ts<br>narasi = data, bukan kode</span></span></button>
+
+<button class="node d6" onClick="{{p.osm}}" style="position: absolute; left: 996px; top: 716px; width: 220px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.osm}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #A8B3BF">FALLBACK</span><br><b style="font-size: 18px">OSM raster</b><br><span style="color: #8B949E">Digelapkan · dev lokal</span></span></button>
+<button class="node d6" onClick="{{p.maptiler}}" style="position: absolute; left: 1296px; top: 716px; width: 272px; height: 104px; box-sizing: border-box; padding: 12px 16px; display: flex; align-items: center; text-align: left; border-radius: 12px; background: #161B22; border: 1px solid {{ring.maptiler}}; font-size: 14px; line-height: 20px"><span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #A8B3BF">BASEMAP</span><br><b style="font-size: 18px">MapTiler</b><br><span style="color: #8B949E">Vektor dataviz-dark</span></span></button>
+
+<div style="position: absolute; left: 324px; top: 272px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.prod}}">edit</div>
+<div style="position: absolute; left: 624px; top: 272px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.prod}}">publish</div>
+<div style="position: absolute; left: 916px; top: 272px; width: 80px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.prod}}">WFS·WMTS</div>
+<div style="position: absolute; left: 1224px; top: 272px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.prod}}">HTTPS</div>
+<div style="position: absolute; left: 320px; top: 532px; width: 72px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.stat}}">generate</div>
+<div style="position: absolute; left: 624px; top: 532px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.stat}}">bundle</div>
+<div style="position: absolute; left: 924px; top: 532px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.stat}}">deploy</div>
+<div style="position: absolute; left: 1224px; top: 532px; width: 64px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E; opacity: {{op.stat}}">GET</div>
+<div style="position: absolute; left: 1220px; top: 740px; width: 72px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E">tanpa key</div>
+<div style="position: absolute; left: 1444px; top: 656px; width: 48px; text-align: center; font-size: 13px; line-height: 16px; color: #8B949E">tiles</div>
+
+<div aria-live="polite" style="position: absolute; left: 96px; top: 880px; width: 1472px; height: 120px; box-sizing: border-box; padding: 20px 28px; background: #161B22; border: 1px solid #30363D; border-radius: 16px; display: flex; align-items: center; gap: 28px">
+  <span style="flex: none; width: 6px; height: 72px; border-radius: 3px; background: {{cur.color}}"></span>
+  <span style="flex: none; width: 260px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: {{cur.color}}">{{cur.tag}}</span><span style="font-size: 24px; font-weight: 700; line-height: 30px">{{cur.title}}</span></span>
+  <span style="font-size: 16px; line-height: 24px; color: #C9D1D9">{{cur.body}}</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1664,"height":1064}}'>
+var C = { prod: '#2DD4BF', stat: '#FBBF24', base: '#A8B3BF', client: '#E6EDF3' };
+var NODES = {
+  qgis: { band: 'prod', tag: 'PRODUKSI · AUTHORING', title: 'QGIS', body: 'Desktop GIS untuk edit dan styling. Menulis langsung ke PostGIS; gaya layer diterbitkan ke GeoServer.' },
+  postgis: { band: 'prod', tag: 'PRODUKSI · STORAGE', title: 'PostGIS', body: 'Database spasial PostgreSQL. Batas lima kota, landmark dan sel kemacetan disimpan di EPSG:4326; query spasial berjalan di server.' },
+  geoserver: { band: 'prod', tag: 'PRODUKSI · OGC', title: 'GeoServer', body: 'Menerbitkan tabel PostGIS sebagai WFS (GeoJSON) dan WMTS. GeoWebCache men-cache tile; styling terpusat di satu tempat.' },
+  gateway: { band: 'prod', tag: 'PRODUKSI · DELIVERY', title: 'Gateway / CDN', body: 'Satu pintu publik di depan GeoServer: cache respons dan tile, HTTPS, dan pembatasan akses.' },
+  scripts: { band: 'stat', tag: 'STATIS · PIPELINE', title: 'Data scripts', body: 'build-districts.mjs: GADM 4.1 difilter ke JakartaRaya, koordinat dibulatkan ~1 m. build-congestion.mjs: sampel Jl. Sudirman → sel geohash presisi 7 (~150 m).' },
+  geojson: { band: 'stat', tag: 'STATIS · BUNDLED DATA', title: 'GeoJSON', body: 'jakarta-districts (~13 KB), landmarks, dan congestion. Di-commit ke repo, jadi npm run dev jalan tanpa langkah data.' },
+  build: { band: 'stat', tag: 'STATIS · BUILD', title: 'next build', body: 'output: export menghasilkan situs statis di ./out. NEXT_PUBLIC_MAPTILER_KEY di-inline saat build.' },
+  vercel: { band: 'stat', tag: 'STATIS · DELIVERY', title: 'Vercel Edge CDN', body: 'Menyajikan HTML, JS dan GeoJSON statis dari edge, tanpa server aplikasi. Inilah yang berjalan hari ini.' },
+  browser: { band: 'client', tag: 'KLIEN', title: 'Browser', body: 'Peta sticky di belakang panel scroll. Scrollama memicu chapter → flyTo kamera, highlight distrik, landmark, overlay Sudirman. Source MapLibre membaca /data/*.geojson atau URL GeoServer: hanya URL yang berubah.' },
+  osm: { band: 'base', tag: 'BASEMAP · FALLBACK', title: 'OSM raster', body: 'Dipakai saat NEXT_PUBLIC_MAPTILER_KEY kosong: tile OpenStreetMap standar yang digelapkan, untuk dev lokal dan preview.' },
+  maptiler: { band: 'base', tag: 'BASEMAP', title: 'MapTiler', body: 'Basemap vektor dataviz-dark dengan key dibatasi domain. Layer cerita disisipkan di bawah label pertama agar nama jalan tetap terbaca.' }
+};
+var MODES = [
+  { id: 'all', label: 'Semua', color: '#E6EDF3' },
+  { id: 'prod', label: 'Produksi', color: C.prod },
+  { id: 'stat', label: 'Statis', color: C.stat }
+];
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var mode = this.state.mode || 'all';
+    var sel = this.state.sel || 'browser';
+    var p = {}, ring = {};
+    Object.keys(NODES).forEach(function (k) {
+      p[k] = function () { self.setState({ sel: k }); };
+      ring[k] = k === sel ? C[NODES[k].band] : '#30363D';
+    });
+    var tabs = MODES.map(function (m) {
+      var a = m.id === mode;
+      return Object.assign({}, m, {
+        active: a ? 'true' : 'false',
+        bg: a ? '#2D333B' : 'transparent',
+        fg: a ? '#E6EDF3' : '#8B949E',
+        pick: function () { self.setState({ mode: m.id }); }
+      });
+    });
+    var n = NODES[sel];
+    return {
+      p: p, ring: ring, tabs: tabs,
+      op: { prod: mode === 'stat' ? 0.18 : 1, stat: mode === 'prod' ? 0.18 : 1 },
+      cur: Object.assign({}, n, { color: C[n.band] })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Stack — Jakarta WebGIS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D1117;--panel:#161B22;--panel2:#1C2330;--line:#30363D;--line2:#21262D;--fg:#E6EDF3;--muted:#8B949E;--soft:#C9D1D9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:'Space Grotesk',system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{max-width:1440px;margin:0 auto;padding:56px 64px;display:flex;flex-direction:column;gap:32px;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.kicker{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#2DD4BF;display:inline-block;animation:pulse 1.8s ease-in-out infinite}
+h1{margin:10px 0;font-size:56px;line-height:60px;font-weight:700;letter-spacing:-.02em}
+.lead{margin:0;font-size:17px;color:var(--muted);max-width:640px}
+.tabs{display:flex;gap:6px;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;flex-wrap:wrap}
+.tab{min-height:44px;padding:0 16px;border:0;border-radius:10px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;background:transparent;color:var(--muted);transition:background .2s,color .2s}
+.tab[aria-selected="true"]{background:#2D333B;color:var(--fg)}
+.sw{width:8px;height:8px;border-radius:2px}
+.body{display:flex;gap:32px;flex-wrap:wrap}
+.grid{flex:999 1 560px;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:96px;gap:12px;align-content:start}
+.card{border:1px solid var(--line2);background:var(--panel);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;text-align:left;animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards;transition:opacity .35s,border-color .25s,transform .25s,background .25s}
+.card:hover{transform:translateY(-3px)}
+.card.dim{opacity:.18}
+.card[aria-pressed="true"]{background:var(--panel2)}
+.mon{flex:none;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:15px}
+.ct{display:flex;flex-direction:column;gap:4px;min-width:0}
+.nm{font-size:17px;font-weight:600}
+.vr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+aside{flex:1 1 360px;max-width:420px;padding:28px;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;gap:20px}
+aside.swap{animation:slide .45s cubic-bezier(.2,.7,.2,1)}
+.dh{display:flex;align-items:center;gap:16px}
+.big{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500}
+.dn{font-size:26px;font-weight:700;line-height:30px}
+.badge{align-self:flex-start;font-size:12px;padding:3px 8px;border-radius:6px;margin-top:6px;display:inline-block}
+.lbl{font-size:12px;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:6px}
+.role{font-size:17px;line-height:24px}
+.why{font-size:15px;line-height:23px;color:var(--soft)}
+.where{margin-top:auto;padding-top:16px;border-top:1px solid var(--line)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{padding:16px 20px;background:var(--panel);border:1px solid var(--line2);border-radius:14px;display:flex;flex-direction:column;gap:10px;animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards}
+.sv{font-size:28px;font-weight:700}.sl{font-size:14px;color:var(--muted);margin-left:10px}
+.track{height:4px;border-radius:2px;background:var(--line2);overflow:hidden}
+.bar{height:4px;transform-origin:left;animation:grow 1.2s cubic-bezier(.2,.7,.2,1) backwards}
+footer{font-size:13px;color:var(--muted)}footer a{color:#2DD4BF}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+@keyframes slide{from{opacity:0;transform:translateX(24px)}}
+@keyframes grow{from{transform:scaleX(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,212,191,.55)}50%{box-shadow:0 0 0 8px rgba(45,212,191,0)}}
+@media (max-width:900px){.wrap{padding:32px 16px}h1{font-size:40px;line-height:44px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}aside{max-width:none}}
+@media (max-width:520px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker mono"><span class="dot"></span><span>JAKARTA — LIMA WAJAH SATU KOTA · WEBGIS STORYTELLING</span></div>
+      <h1>Tech Stack</h1>
+      <p class="lead">Frontend statis yang siap pindah ke backend geospasial open-source tanpa mengubah kode aplikasi.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Filter layer" id="tabs"></div>
+  </header>
+  <div class="body">
+    <div class="grid" id="grid"></div>
+    <aside id="detail" aria-live="polite"></aside>
+  </div>
+  <div class="stats" id="stats"></div>
+  <footer>Lihat juga <a href="architecture.html">Diagram Arsitektur →</a></footer>
+</div>
+<script>
+const LAYERS = {
+  fe: { name: 'Frontend', color: '#2DD4BF', tint: 'rgba(45,212,191,0.12)' },
+  be: { name: 'Backend produksi', color: '#60A5FA', tint: 'rgba(96,165,250,0.12)' },
+  data: { name: 'Data', color: '#FBBF24', tint: 'rgba(251,191,36,0.12)' },
+  ops: { name: 'Deploy & QA', color: '#C4B5FD', tint: 'rgba(196,181,253,0.12)' }
+};
+const ITEMS = [
+  { id: 'nextjs', mono: 'NX', name: 'Next.js 14', ver: 'App Router · output: export', layer: 'fe', role: 'Kerangka aplikasi dan static export ke ./out.', why: 'Tanpa server: build sekali, dilayani dari CDN. App Router menampung StoryApp, Scroller, Chapter dan ExplorePanel.', where: 'app/ · next.config.mjs' },
+  { id: 'ts', mono: 'TS', name: 'TypeScript', ver: 'narasi bertipe', layer: 'fe', role: 'Tipe untuk model chapter dan kamera.', why: 'Narasi adalah data: chapters.ts dan mapViews.ts bertipe, jadi id distrik atau koordinat yang salah ketahuan saat build.', where: 'lib/ · types/' },
+  { id: 'maplibre', mono: 'ML', name: 'MapLibre GL JS 4', ver: 'WebGL vector map', layer: 'fe', role: 'Peta: kamera, layer, highlight distrik, hover tooltip.', why: 'Open-source. Abstraksi source-nya membuat layer membaca /data/*.geojson atau endpoint GeoServer cukup dengan ganti URL.', where: 'components/MapCanvas · lib/mapLayers.ts' },
+  { id: 'scrollama', mono: 'SC', name: 'Scrollama 3', ver: 'scroll-driven trigger', layer: 'fe', role: 'Memicu chapter saat panel masuk viewport.', why: 'Ringan, berbasis IntersectionObserver. Tiap panel memicu flyTo kamera, highlight batas, dan reveal landmark.', where: 'lib/useScrollChapter' },
+  { id: 'maptiler', mono: 'MT', name: 'MapTiler', ver: 'dataviz-dark · OSM fallback', layer: 'fe', role: 'Basemap vektor; layer cerita disisipkan di bawah label.', why: 'Key dibatasi domain memberi SLA. Tanpa key, aplikasi turun ke tile OSM raster yang digelapkan untuk dev lokal.', where: 'lib/basemap.ts' },
+  { id: 'postgis', mono: 'PG', name: 'PostGIS', ver: 'EPSG:4326', layer: 'be', role: 'Penyimpanan spasial: batas, landmark, sel kemacetan.', why: 'Query spasial di server dan satu sumber kebenaran untuk data yang berubah, seperti lalu lintas live.', where: 'docs/architecture.md §6' },
+  { id: 'geoserver', mono: 'GS', name: 'GeoServer', ver: 'WFS · WMTS · GeoWebCache', layer: 'be', role: 'Menyajikan layer sebagai layanan OGC.', why: 'Styling terpusat dan tiling. WFS GeoJSON langsung terbaca oleh source MapLibre.', where: 'docs/architecture.md §6' },
+  { id: 'qgis', mono: 'QG', name: 'QGIS', ver: 'authoring desktop', layer: 'be', role: 'Editing dan styling data.', why: 'Edit langsung ke PostGIS; gaya layer bisa dipublikasikan ke GeoServer.', where: 'docs/architecture.md §6' },
+  { id: 'gadm', mono: 'GA', name: 'GADM 4.1', ver: 'ADM2 · JakartaRaya', layer: 'data', role: 'Batas lima kota administrasi.', why: 'Difilter ke NAME_1 = JakartaRaya, koordinat dibulatkan ~1 m menjadi ~13 KB. Lisensi non-komersial; geoBoundaries untuk build publik.', where: 'scripts/build-districts.mjs' },
+  { id: 'mapshaper', mono: 'MS', name: 'mapshaper', ver: 'simplifikasi geometri', layer: 'data', role: 'Memangkas ukuran batas wilayah.', why: 'Geometri ringan berarti muat cepat lewat CDN, termasuk di ponsel.', where: 'pipeline data' },
+  { id: 'ngeohash', mono: 'GH', name: 'ngeohash', ver: 'geohash presisi 7', layer: 'data', role: 'Sel kemacetan Jalan Sudirman.', why: 'Sampel garis tengah Sudirman dienkode ke sel ~150 m; tiap sel jadi poligon merah berstatus macet.', where: 'scripts/build-congestion.mjs' },
+  { id: 'vercel', mono: 'VC', name: 'Vercel', ver: 'Edge CDN', layer: 'ops', role: 'Hosting static export.', why: 'Preset Next.js mendeteksi output: export otomatis. NEXT_PUBLIC_* di-inline saat build.', where: 'Settings → Environment Variables' },
+  { id: 'vitest', mono: 'VT', name: 'Vitest', ver: '+ Testing Library · 60 tes', layer: 'ops', role: 'Unit test model dan komponen.', why: 'Menguji model chapter, kamera dan komponen dengan cepat tanpa browser sungguhan.', where: 'tests/ · vitest.config.ts' }
+];
+const TABS = [
+  { id: 'all', label: 'Semua', color: '#E6EDF3' },
+  { id: 'fe', label: 'Frontend', color: LAYERS.fe.color },
+  { id: 'be', label: 'Backend', color: LAYERS.be.color },
+  { id: 'data', label: 'Data', color: LAYERS.data.color },
+  { id: 'ops', label: 'Deploy & QA', color: LAYERS.ops.color }
+];
+const STATS = [
+  { value: String(ITEMS.length), label: 'teknologi', pct: '100%', color: '#2DD4BF' },
+  { value: '60', label: 'unit test', pct: '80%', color: '#C4B5FD' },
+  { value: '~13 KB', label: 'batas wilayah', pct: '30%', color: '#FBBF24' },
+  { value: '5', label: 'chapter cerita', pct: '62%', color: '#60A5FA' }
+];
+const state = { filter: 'all', sel: 'maplibre' };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+$('tabs').innerHTML = TABS.map((t) =>
+  `<button class="tab" role="tab" data-id="${t.id}" aria-selected="false"><span class="sw" style="background:${t.color}"></span>${esc(t.label)}</button>`).join('');
+$('grid').innerHTML = ITEMS.map((it, i) => {
+  const L = LAYERS[it.layer];
+  return `<button class="card" data-id="${it.id}" aria-pressed="false" style="animation-delay:${i * 55}ms">
+    <span class="mon mono" style="background:${L.tint};color:${L.color}">${it.mono}</span>
+    <span class="ct"><span class="nm">${esc(it.name)}</span><span class="vr mono">${esc(it.ver)}</span></span></button>`;
+}).join('');
+$('stats').innerHTML = STATS.map((s, i) =>
+  `<div class="stat" style="animation-delay:${700 + i * 80}ms"><div><span class="sv">${esc(s.value)}</span><span class="sl">${esc(s.label)}</span></div>
+   <div class="track"><div class="bar" style="width:${s.pct};background:${s.color};animation-delay:${700 + i * 80}ms"></div></div></div>`).join('');
+
+function render() {
+  document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.id === state.filter)));
+  document.querySelectorAll('.card').forEach((b) => {
+    const it = ITEMS.find((x) => x.id === b.dataset.id);
+    const picked = it.id === state.sel;
+    b.classList.toggle('dim', !(state.filter === 'all' || state.filter === it.layer));
+    b.setAttribute('aria-pressed', String(picked));
+    b.style.borderColor = picked ? LAYERS[it.layer].color : '';
+  });
+  const c = ITEMS.find((x) => x.id === state.sel);
+  const L = LAYERS[c.layer];
+  const d = $('detail');
+  d.innerHTML = `<div class="dh"><span class="big mono" style="background:${L.tint};color:${L.color}">${c.mono}</span>
+    <div><div class="dn">${esc(c.name)}</div><span class="badge mono" style="background:${L.tint};color:${L.color}">${esc(L.name)}</span></div></div>
+    <div><span class="lbl mono">PERAN</span><span class="role">${esc(c.role)}</span></div>
+    <div><span class="lbl mono">KENAPA DIPILIH</span><span class="why">${esc(c.why)}</span></div>
+    <div class="where"><span class="lbl mono">DI REPO</span><span class="mono" style="font-size:13px;color:${L.color}">${esc(c.where)}</span></div>`;
+  d.classList.remove('swap'); void d.offsetWidth; d.classList.add('swap');
+}
+$('tabs').addEventListener('click', (e) => { const b = e.target.closest('.tab'); if (b) { state.filter = b.dataset.id; render(); } });
+$('grid').addEventListener('click', (e) => { const b = e.target.closest('.card'); if (b) { state.sel = b.dataset.id; render(); } });
+render();
+</script>
+</body>
+</html>
