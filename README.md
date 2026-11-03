@@ -163,7 +163,7 @@ QA, analytics): ~3–4 weeks.
    serves the static build; no extra config needed.
 3. Invite `catalyzecomms` to the GitHub repo and share the repo + Vercel links.
 
-## Reverse-engineering note
+## Reference and approach
 
 The reference, `lancastersound.wwf.ca`, is a ~2016 RequireJS SPA using **Leaflet
 0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937), a **Mapbox classic
