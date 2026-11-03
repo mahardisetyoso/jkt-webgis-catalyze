@@ -9,7 +9,7 @@
 
 A web application that walks a visitor through the **five municipalities (kota administrasi) of DKI Jakarta** as a scripted, scroll-driven narrative, ending in an interactive map. It is the Catalyze "WebGIS Development" case study — a modern reconstruction of the storytelling approach seen on [`lancastersound.wwf.ca`](https://lancastersound.wwf.ca), applied to Jakarta.
 
-**In scope (POC):** the scrollytelling experience, five district narratives + landmark highlights, boundary + point geodata, a **hover-to-highlight** interaction on district polygons, a **traffic-congestion layer** (geohash cells along Jalan Sudirman, red = *macet*), a free **explore mode** after the story, and Vercel deployment.
+**In scope (POC):** the scrollytelling experience, five district narratives + landmark highlights, boundary + point geodata, a **hover-to-highlight** interaction on district polygons, a **traffic-congestion layer** (geohash cells along Jalan Sudirman, red = *macet*), a **gallery mode** (grid of district photos with a lightbox), a free **explore mode** after the story, a persistent **three-mode nav** (Cerita · Galeri · Jelajahi), and Vercel deployment.
 **Out of scope (POC):** CMS, authentication, write APIs, live/real-time traffic feeds (congestion is static sample data), multi-language UI (noted as an evolution step).
 
 The narrative (simple, Bahasa Indonesia):
@@ -75,23 +75,32 @@ The browser talks to **one origin, Vercel**: it serves the **app** (HTML/JS, plu
 flowchart TB
     subgraph browser[Browser runtime]
         direction TB
-        story[StoryApp<br/>state: activeChapter, mode, reducedMotion]
+        story[StoryApp<br/>state: activeChapter, view, reducedMotion]
+        nav[ModeNav<br/>Cerita · Galeri · Jelajahi]
         scroller[Scroller<br/>Scrollama wrapper]
-        chapter[Chapter × N<br/>title + body + image]
+        chapter[Chapter × N<br/>title · subtitle · photos]
+        dots[ChapterDots<br/>progress nav]
         map[MapCanvas<br/>MapLibre GL instance]
         explore[ExplorePanel<br/>layer toggles · free pan/zoom]
+        gallery[GalleryGrid<br/>photo grid]
+        lightbox[Lightbox<br/>enlarged photo]
+        story --> nav
         story --> scroller
         scroller --> chapter
+        story --> dots
         story --> map
         story --> explore
         explore --> map
+        story --> gallery
+        gallery --> lightbox
     end
 
     subgraph config[Build-time config]
-        chapters[chapters.ts<br/>narrative model]
+        chapters[chapters.ts<br/>narrative model + colours]
         views[mapViews.ts<br/>camera presets]
         layers[mapLayers.ts<br/>paint/filter helpers]
-        images[/images/*.jpg/]
+        basemap[basemap.ts<br/>MapTiler / OSM switch]
+        images[/images/photos/*.jpg/]
     end
 
     subgraph data[Geodata — districts · landmarks · congestion]
@@ -113,12 +122,17 @@ flowchart TB
 
 | Component | Responsibility | Key interface |
 |-----------|----------------|---------------|
-| `StoryApp` | Hold `activeChapter` + `mode` (`story`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map | `activeDistrictId`, `view`, `mode`, `showCongestion` → `MapCanvas` |
-| `Scroller` | Fire `onChapter(index)` as panels enter viewport (Scrollama) | `{chapters, onChapter}` |
-| `Chapter` | Render one narrative panel (title, body, image) | `{chapter}` |
-| `MapCanvas` | Own the MapLibre map; highlight active district, hover-highlight, fly camera, show landmarks + congestion; enable interaction in explore mode | `{activeDistrictId, view, mode, showCongestion, reducedMotion}` |
-| `ExplorePanel` | Render layer toggles + hint shown in explore mode | `{layers, onToggle}` |
-| `lib/mapLayers.ts` | Pure styling helpers (testable without WebGL) | `districtFillPaint`, `landmarkFilter`, `cameraMove`, `congestionPaint` |
+| `StoryApp` | Hold `activeChapter` + `view` (`story`/`gallery`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map, own the gallery lightbox index | `activeDistrictId`, `view`, `mode`, `showCongestion`, `showAllLandmarks` → `MapCanvas` |
+| `ModeNav` | Persistent header nav switching the three modes | `{view, onChange}` |
+| `Scroller` | Fire `onChapter(index)` as panels enter viewport (Scrollama) | `{chapters, onChapter, active}` |
+| `Chapter` | Render one narrative panel (kicker/theme, title, subtitle, body, one or two photos) | `{chapter, index, active}` |
+| `ChapterDots` | Progress-dot navigator down the side; jump to a chapter | `{chapters, active, onSelect}` |
+| `MapCanvas` | Own the MapLibre map; highlight active district, hover-highlight, fly camera, show landmarks + congestion; enable interaction in explore mode | `{activeDistrictId, view, mode, showCongestion, showAllLandmarks, reducedMotion}` |
+| `ExplorePanel` | Render layer toggles shown in explore mode | `{layers, onToggle}` |
+| `GalleryGrid` | Photo grid of all chapter photos (tile = thumbnail + caption + district accent) | `{items, onOpen}` |
+| `Lightbox` | Enlarged photo overlay with prev/next/close + keyboard | `{items, index, onClose, onIndex}` |
+| `lib/mapLayers.ts` | Pure styling/geometry helpers (testable without WebGL) | `districtFillPaint`, `districtColorExpr`, `landmarkFilter`, `districtIdFilter`, `congestionPaint`, `congestionPulseOpacity`, `cameraMove`, `cameraPadding`, `mapInteractive` |
+| `lib/basemap.ts` | Pick MapTiler vector (keyed) or OSM raster basemap | reads `NEXT_PUBLIC_MAPTILER_*` |
 
 ---
 
@@ -153,6 +167,7 @@ sequenceDiagram
 |---------|--------|-----|
 | Framework | Next.js 14 (static export) | Brief mandates Vercel; first-class there; static export = zero server cost |
 | Map engine | **MapLibre GL JS 4** | Open-source, no access token, vector-capable, data-driven styling, smooth `flyTo` |
+| Basemap | **MapTiler** vector (OSM raster fallback) | Keyed vector style in production, keyless OSM for dev; selected in `lib/basemap.ts` |
 | Scroll trigger | **Scrollama 3** | IntersectionObserver-based, the de-facto scrollytelling library, tiny |
 | Language | TypeScript | Typed chapter/geo models catch config errors at build |
 | Test | Vitest + Testing Library + jsdom | Fast; unit-tests the pure logic (paint, filter, scroll math) |
@@ -160,15 +175,21 @@ sequenceDiagram
 ### 5.3 Interactions
 
 - **Hover-to-highlight (district polygons):** on `mousemove` over the district fill layer, MapLibre `setFeatureState({hover:true})` thickens that polygon's outline and lifts its fill opacity; a lightweight tooltip follows the cursor showing the district `name`. `mouseleave` clears the state. This uses feature-state, not a layer rebuild, so it is cheap and does not fight the active-chapter highlight. Hover is a pointer affordance; keyboard/touch users rely on the scripted highlight and the explore toggles, so no information is hover-only.
-- **Explore mode (after the story):** the outro chapter offers an "Explore" entry. `StoryApp.mode` flips to `explore`: the map's pan/zoom/scroll-zoom handlers are enabled, all five districts render at base opacity, all landmarks show, and an `ExplorePanel` exposes toggles (district labels, landmarks, Sudirman congestion). This is the reference site's third mode (free *layers* exploration) folded into the end of the linear story — scripted first, open-ended after.
+- **Three-mode nav:** a persistent `ModeNav` in the header (Cerita · Galeri · Jelajahi) switches `StoryApp.view` between `story`, `gallery`, and `explore` at any time; leaving `story` resets scroll to the top and closes any open lightbox.
+- **Gallery mode:** `view = 'gallery'` shows a full overlay `GalleryGrid` — every chapter photo as a tile (caption + district accent). Clicking a tile opens a `Lightbox` (enlarged photo, caption, prev/next/close, keyboard Esc/←/→, click-backdrop to close). This revives the reference site's *gallery* mode as a simple photo grid.
+- **Explore mode (after the story):** the outro also offers an "Explore" button; `view` flips to `explore`: the map's pan/zoom/scroll-zoom handlers are enabled, all five districts render at base opacity, all landmarks show, and an `ExplorePanel` exposes toggles (landmarks, Sudirman congestion). This is the reference site's free *layers* mode, folded in after the scripted story.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Story
+    note right of Story: ModeNav switches Story / Gallery / Explore anytime
     Story --> Story: scroll (chapter changes, camera locked)
-    Story --> Explore: click "Explore" on outro
-    Explore --> Story: click "Back to story"
+    Story --> Gallery: "Galeri"
+    Story --> Explore: "Jelajahi" / outro button
+    Gallery --> Gallery: open photo → lightbox (prev/next/close)
+    Gallery --> Story: "Cerita"
     Explore --> Explore: pan / zoom / toggle layers
+    Explore --> Story: "Cerita" / "Back to story"
 ```
 
 ---
@@ -424,7 +445,7 @@ flowchart LR
 
 **`lancastersound.wwf.ca` (reverse-engineered):** a ~2016 RequireJS SPA using **Leaflet 0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937), a **Mapbox classic raster** basemap, and **static TopoJSON/GeoJSON** data (with an optional ArcGIS REST path). Three modes — scripted *story*, *gallery* of clustered media, free-explore *layers* — all driven by declarative JSON config. Narrative scenes are largely pre-rendered PNGs.
 
-**This project keeps** the config-driven narrative model, named camera views, static delivery of the app, and the story→explore arc (and adds a live PostGIS + GeoServer data backend behind it, §6). **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
+**This project keeps** the config-driven narrative model, named camera views, static delivery of the app, and the full story → gallery → explore arc (and adds a live PostGIS + GeoServer data backend behind it, §6). **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
 
 ---
 

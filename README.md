@@ -2,7 +2,7 @@
 
 A scroll-driven **WebGIS storytelling** proof-of-concept that walks the viewer
 through the five municipalities (kota administrasi) of DKI Jakarta, then opens
-into a freely explorable map. Built for the Catalyze "WebGIS Development" case
+into a photo gallery and a freely explorable map. Built for the Catalyze "WebGIS Development" case
 study — a modern reconstruction of the digital-storytelling approach seen on
 [lancastersound.wwf.ca](https://lancastersound.wwf.ca).
 
@@ -62,7 +62,8 @@ sits sticky behind scrolling narrative panels; **Scrollama** fires a chapter cha
 each panel enters view, flying the camera to that district, highlighting its boundary
 (dimming the others), revealing its landmarks, and — for Jakarta Pusat — showing the
 Sudirman congestion overlay. After the last chapter an **explore mode** unlocks free
-pan/zoom with layer toggles.
+pan/zoom with layer toggles. A persistent **three-mode nav** (Cerita · Galeri · Jelajahi)
+also opens a **photo gallery** (grid + lightbox) and the explore map at any time.
 
 The narrative is **data, not code**: `lib/chapters.ts` + `lib/mapViews.ts` declare
 what each chapter says, which photos it shows, and where the camera goes. Components
@@ -149,6 +150,8 @@ QA, analytics): ~3–4 weeks.
 - Landmark markers per district, coloured by district
 - **Sudirman traffic-congestion overlay** (geohash cells, red = *macet*, pulsing)
 - **Explore mode** after the story: free pan/zoom + layer toggles
+- **Gallery mode**: grid of all district photos with a lightbox (prev/next/close, keyboard)
+- Persistent **three-mode nav** (Cerita · Galeri · Jelajahi) to switch modes anytime
 - Respects `prefers-reduced-motion` (instant camera instead of fly)
 - Trilingual-ready content model (currently Bahasa Indonesia)
 - Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 70 unit tests
@@ -192,8 +195,9 @@ PostGIS → GeoJSON snapshot (live mode).
 
 ```
 app/            Next.js App Router (layout, page, global CSS)
-components/      MapCanvas, Scroller, Chapter, StoryApp, ExplorePanel
-lib/            chapters, mapViews, mapLayers, useScrollChapter
+components/      MapCanvas, Scroller, Chapter, ChapterDots, StoryApp,
+                 ModeNav, ExplorePanel, GalleryGrid, Lightbox
+lib/            chapters, mapViews, mapLayers, basemap, useScrollChapter
 scripts/        build-districts / build-congestion / build-images
 public/data/     districts, landmarks, congestion GeoJSON
 public/images/   district photos in photos/ (+ CREDITS.md)
