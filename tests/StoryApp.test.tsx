@@ -60,11 +60,24 @@ describe("StoryApp", () => {
     expect(screen.getByTestId("map").getAttribute("data-congestion")).toBe("true");
   });
 
-  it("enters explore mode from the outro and shows the explore panel", () => {
+  it("enters explore mode from the nav and shows the explore panel", () => {
     render(<StoryApp />);
-    act(() => enterCb!({ index: idx("outro") }));
-    fireEvent.click(screen.getByRole("button", { name: /jelajahi/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Jelajahi" }));
     expect(screen.getByTestId("map").getAttribute("data-mode")).toBe("explore");
     expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
+  });
+
+  it("shows the three-mode nav", () => {
+    render(<StoryApp />);
+    for (const name of ["Cerita", "Galeri", "Jelajahi"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("opens the photo gallery and a lightbox from a tile", () => {
+    render(<StoryApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Galeri" }));
+    fireEvent.click(screen.getByRole("button", { name: /SCBD/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });

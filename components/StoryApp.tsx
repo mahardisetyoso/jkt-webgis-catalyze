@@ -5,15 +5,29 @@ import MapCanvas from "./MapCanvas";
 import Scroller from "./Scroller";
 import ExplorePanel from "./ExplorePanel";
 import ChapterDots from "./ChapterDots";
+import ModeNav, { type ViewMode } from "./ModeNav";
+import GalleryGrid, { type GalleryItem } from "./GalleryGrid";
+import Lightbox from "./Lightbox";
 import { chapters } from "@/lib/chapters";
 import { mapViews } from "@/lib/mapViews";
 
 type ExploreLayers = { landmarks: boolean; congestion: boolean };
 
+// All chapter photos flattened into gallery items (static — chapters never change).
+const galleryItems: GalleryItem[] = chapters.flatMap((c) =>
+  c.photos.map((p) => ({
+    src: p.src,
+    caption: p.caption,
+    district: c.districtId ?? "",
+    color: c.color ?? "#8a99ad",
+  })),
+);
+
 export default function StoryApp() {
   const [active, setActive] = useState(0);
-  const [mode, setMode] = useState<"story" | "explore">("story");
+  const [view, setView] = useState<ViewMode>("story");
   const [reduced, setReduced] = useState(false);
+  const [lightbox, setLightbox] = useState<number | null>(null);
   const [layers, setLayers] = useState<ExploreLayers>({
     landmarks: true,
     congestion: true,
@@ -27,19 +41,23 @@ export default function StoryApp() {
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
 
-  // Explore mode removes the scroll column, so return the viewport to the top.
+  // Gallery and explore are full overlays; reset scroll and any open lightbox.
   useEffect(() => {
-    if (mode === "explore") window.scrollTo(0, 0);
-  }, [mode]);
+    if (view !== "story") window.scrollTo(0, 0);
+    if (view !== "gallery") setLightbox(null);
+  }, [view]);
 
   const chapter = chapters[active] ?? chapters[0];
-  const isExplore = mode === "explore";
+  const isStory = view === "story";
+  const isGallery = view === "gallery";
+  const isExplore = view === "explore";
+  const mapMode = isExplore ? "explore" : "story";
 
   const mapProps = isExplore
     ? {
         activeDistrictId: null,
         view: mapViews.overview,
-        mode,
+        mode: mapMode,
         showCongestion: layers.congestion,
         showAllLandmarks: layers.landmarks,
         reducedMotion: reduced,
@@ -47,7 +65,7 @@ export default function StoryApp() {
     : {
         activeDistrictId: chapter.districtId,
         view: chapter.view,
-        mode,
+        mode: mapMode,
         showCongestion: chapter.congestion === true,
         showAllLandmarks: false,
         reducedMotion: reduced,
@@ -55,11 +73,13 @@ export default function StoryApp() {
 
   return (
     <>
+      <ModeNav view={view} onChange={setView} />
+
       <div className="map-sticky">
         <MapCanvas {...mapProps} />
       </div>
 
-      {!isExplore && (
+      {isStory && (
         <>
           <ChapterDots
             chapters={chapters}
@@ -76,7 +96,7 @@ export default function StoryApp() {
           <Scroller chapters={chapters} onChapter={setActive} active={active} />
           {chapter.id === "outro" && (
             <div className="explore-cta">
-              <button type="button" onClick={() => setMode("explore")}>
+              <button type="button" onClick={() => setView("explore")}>
                 Jelajahi peta ↗
               </button>
             </div>
@@ -99,13 +119,23 @@ export default function StoryApp() {
               setLayers((s) => ({ ...s, [id]: !s[id as keyof ExploreLayers] }))
             }
           />
-          <button
-            type="button"
-            className="back-btn"
-            onClick={() => setMode("story")}
-          >
+          <button type="button" className="back-btn" onClick={() => setView("story")}>
             ← Kembali ke cerita
           </button>
+        </div>
+      )}
+
+      {isGallery && (
+        <div className="gallery-overlay">
+          <GalleryGrid items={galleryItems} onOpen={setLightbox} />
+          {lightbox !== null && (
+            <Lightbox
+              items={galleryItems}
+              index={lightbox}
+              onClose={() => setLightbox(null)}
+              onIndex={setLightbox}
+            />
+          )}
         </div>
       )}
     </>
