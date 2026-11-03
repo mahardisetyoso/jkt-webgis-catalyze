@@ -4,17 +4,20 @@
 
 Used in the chapter cards. Resized to ≤1000 px and recompressed for the web.
 
-| File | District | Subject | Source / license |
+| File | District | Subject | Source |
 |------|----------|---------|------------------|
-| `photos/scbd.jpg` | Jakarta Pusat | SCBD skyline | _TODO: add source + license_ |
-| `photos/trisakti.jpg` | Jakarta Barat | Universitas Trisakti gate | _TODO: add source + license_ |
-| `photos/mbloc.jpg` | Jakarta Selatan | M Bloc Space | _TODO: add source + license_ |
-| `photos/pik.jpg` | Jakarta Utara | Pantjoran PIK | _TODO: add source + license_ |
-| `photos/glodok.jpg` | Jakarta Utara | Gapura Glodok Pancoran | _TODO: add source + license_ |
-| `photos/pulogadung.jpg` | Jakarta Timur | Kawasan Industri Pulogadung | _TODO: add source + license_ |
+| `photos/scbd.jpg` | Jakarta Pusat | SCBD skyline | Not recorded (see note) |
+| `photos/trisakti.jpg` | Jakarta Barat | Universitas Trisakti gate | Not recorded (see note) |
+| `photos/mbloc.jpg` | Jakarta Selatan | M Bloc Space | Not recorded (see note) |
+| `photos/pik.jpg` | Jakarta Utara | Pantjoran PIK | Not recorded (see note) |
+| `photos/glodok.jpg` | Jakarta Utara | Gapura Glodok Pancoran | Not recorded (see note) |
+| `photos/pulogadung.jpg` | Jakarta Timur | Kawasan Industri Pulogadung | Not recorded (see note) |
 
-> Before a public deploy, fill in the source and license of every photo, or
-> replace it with an own photo / a CC-licensed one (e.g. Wikimedia Commons).
+> **Note:** these photos were collected for this non-commercial assessment only;
+> their original sources and licenses were not recorded, and copyright remains
+> with the respective owners. For any public or production use they would be
+> replaced with own photographs or CC-licensed images (e.g. Wikimedia Commons)
+> with full attribution.
 
 ## Placeholder graphics (legacy)
 
