@@ -15,5 +15,8 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# downloaded source-data cache (GADM, etc.)
+.cache/
+
 # superpowers execution scratch (ledger, briefs)
 .superpowers/
