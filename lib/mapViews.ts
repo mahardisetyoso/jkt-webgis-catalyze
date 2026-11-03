@@ -1,13 +1,20 @@
-export type MapView = { center: [number, number]; zoom: number };
+export type MapView = {
+  center: [number, number];
+  zoom: number;
+  pitch?: number;
+  bearing?: number;
+};
 
 // Camera presets (center = [lon, lat]). The story flies between these; the
 // district views are pinned, not computed from geometry centroids, so a
-// MultiPolygon's offshore parts never pull the camera seaward.
+// MultiPolygon's offshore parts never pull the camera seaward. Centers point at
+// the subject itself — the chapter card is kept clear by camera padding
+// (see cameraPadding in lib/mapLayers.ts), not by nudging the center.
 export const mapViews: Record<string, MapView> = {
-  overview: { center: [106.84, -6.21], zoom: 10.2 },
-  jakpus: { center: [106.805, -6.205], zoom: 12.6 },
-  jakbar: { center: [106.76, -6.16], zoom: 11.8 },
-  jaksel: { center: [106.81, -6.28], zoom: 11.9 },
-  jakut: { center: [106.82, -6.13], zoom: 11.2 },
-  jaktim: { center: [106.9, -6.25], zoom: 11.4 },
+  overview: { center: [106.83, -6.215], zoom: 10.4, pitch: 0, bearing: 0 },
+  jakpus: { center: [106.818, -6.203], zoom: 12.9, pitch: 45, bearing: -18 },
+  jakbar: { center: [106.768, -6.17], zoom: 12.7, pitch: 40, bearing: 12 },
+  jaksel: { center: [106.806, -6.252], zoom: 13.2, pitch: 40, bearing: -10 },
+  jakut: { center: [106.778, -6.128], zoom: 12.3, pitch: 35, bearing: 8 },
+  jaktim: { center: [106.885, -6.24], zoom: 11.3, pitch: 35, bearing: -8 },
 };

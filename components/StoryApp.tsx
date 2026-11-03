@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import MapCanvas from "./MapCanvas";
 import Scroller from "./Scroller";
 import ExplorePanel from "./ExplorePanel";
+import ChapterDots from "./ChapterDots";
 import { chapters } from "@/lib/chapters";
 import { mapViews } from "@/lib/mapViews";
 
@@ -60,7 +61,19 @@ export default function StoryApp() {
 
       {!isExplore && (
         <>
-          <Scroller chapters={chapters} onChapter={setActive} />
+          <ChapterDots
+            chapters={chapters}
+            active={active}
+            onSelect={(i) =>
+              document
+                .querySelectorAll(".step")
+                [i]?.scrollIntoView({
+                  behavior: reduced ? "auto" : "smooth",
+                  block: "center",
+                })
+            }
+          />
+          <Scroller chapters={chapters} onChapter={setActive} active={active} />
           {chapter.id === "outro" && (
             <div className="explore-cta">
               <button type="button" onClick={() => setMode("explore")}>

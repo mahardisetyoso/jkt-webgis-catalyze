@@ -7,27 +7,50 @@ const base: ChapterType = {
   id: "x",
   districtId: "jaksel",
   title: "Judul Tes",
+  subtitle: "Sub tes",
+  theme: "Tema Tes",
+  color: "#c77dff",
   body: "Isi narasi tes.",
-  image: "/images/x.jpg",
+  photos: [{ src: "/images/photos/x.jpg", caption: "Foto X" }],
   view: { center: [106.8, -6.2], zoom: 11 },
 };
 
 describe("Chapter", () => {
-  it("renders the title and body", () => {
-    render(<Chapter chapter={base} />);
-    expect(screen.getByText("Judul Tes")).toBeInTheDocument();
+  it("renders the title, subtitle, theme and body", () => {
+    render(<Chapter chapter={base} index={1} active={false} />);
+    expect(screen.getByRole("heading", { name: "Judul Tes" })).toBeInTheDocument();
+    expect(screen.getByText("Sub tes")).toBeInTheDocument();
+    expect(screen.getByText(/Tema Tes/)).toBeInTheDocument();
     expect(screen.getByText("Isi narasi tes.")).toBeInTheDocument();
   });
 
-  it("renders an image with non-empty alt when image is set", () => {
-    render(<Chapter chapter={base} />);
+  it("renders each photo with its caption as alt text", () => {
+    render(<Chapter chapter={base} index={1} active={false} />);
     const img = screen.getByRole("img");
-    expect(img).toHaveAttribute("src", "/images/x.jpg");
-    expect((img.getAttribute("alt") ?? "").length).toBeGreaterThan(0);
+    expect(img).toHaveAttribute("src", "/images/photos/x.jpg");
+    expect(img).toHaveAttribute("alt", "Foto X");
   });
 
-  it("renders no image when image is null", () => {
-    render(<Chapter chapter={{ ...base, image: null }} />);
+  it("renders two photos side by side when given two", () => {
+    const two = {
+      ...base,
+      photos: [
+        { src: "/a.jpg", caption: "A" },
+        { src: "/b.jpg", caption: "B" },
+      ],
+    };
+    const { container } = render(<Chapter chapter={two} index={1} active={false} />);
+    expect(screen.getAllByRole("img")).toHaveLength(2);
+    expect(container.querySelector(".photo.n2")).not.toBeNull();
+  });
+
+  it("renders no image when photos is empty", () => {
+    render(<Chapter chapter={{ ...base, photos: [] }} index={1} active={false} />);
     expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("marks the active chapter", () => {
+    const { container } = render(<Chapter chapter={base} index={1} active />);
+    expect(container.querySelector(".step.active")).not.toBeNull();
   });
 });

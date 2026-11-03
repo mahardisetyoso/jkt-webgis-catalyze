@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import maplibregl, { type StyleSpecification } from "maplibre-gl";
+import maplibregl from "maplibre-gl";
+import { basemapFromProcessEnv } from "@/lib/basemap";
 import {
   districtFillPaint,
   landmarkFilter,
   congestionPaint,
+  congestionPulseOpacity,
   cameraMove,
+  cameraPadding,
+  districtColorExpr,
+  districtIdFilter,
   mapInteractive,
   type Mode,
 } from "@/lib/mapLayers";
@@ -27,22 +32,9 @@ function landmarksFilterFor(activeId: string | null, showAll: boolean) {
   return showAll ? null : landmarkFilter(activeId);
 }
 
-// Keyless OpenStreetMap raster tiles for the POC. A production build should use a
-// keyed vector-tile provider (e.g. MapTiler) — see docs/architecture.md.
-const BASEMAP: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    },
-  },
-  layers: [{ id: "osm", type: "raster", source: "osm" }],
-};
+// MapTiler vector basemap when NEXT_PUBLIC_MAPTILER_KEY is set, keyless OSM
+// raster otherwise — see lib/basemap.ts.
+const BASEMAP = basemapFromProcessEnv();
 
 const HANDLER_KEYS = [
   "dragPan",
@@ -75,6 +67,7 @@ export default function MapCanvas({
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const readyRef = useRef(false);
   const hoverRef = useRef<string | null>(null);
+  const rafRef = useRef<number | null>(null);
   const propsRef = useRef<Props>({
     activeDistrictId,
     view,
@@ -100,6 +93,28 @@ export default function MapCanvas({
       hoverRef.current,
     )["fill-opacity"];
     map.setPaintProperty("districts-fill", "fill-opacity", op);
+    const outline = districtIdFilter(
+      propsRef.current.activeDistrictId ?? hoverRef.current,
+    );
+    map.setFilter("districts-active", outline);
+    map.setFilter("districts-glow", outline);
+  }
+
+  // Fly (or jump, under reduced motion) to the current view, keeping the subject
+  // clear of the chapter card via padding.
+  function moveCamera() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const { view: v, mode: m, reducedMotion: rm } = propsRef.current;
+    const opts = {
+      center: v.center,
+      zoom: v.zoom - (window.innerWidth <= 720 ? 0.8 : 0),
+      pitch: v.pitch ?? 0,
+      bearing: v.bearing ?? 0,
+      padding: cameraPadding(window.innerWidth, window.innerHeight, m),
+    };
+    if (cameraMove(rm) === "flyTo") map.flyTo({ ...opts, duration: 2200, essential: true });
+    else map.jumpTo(opts);
   }
 
   // Initialise the map once.
@@ -137,18 +152,43 @@ export default function MapCanvas({
         data: "/data/congestion.geojson",
       });
 
+      // On a vector basemap, slot the story polygons beneath its first label layer
+      // so street/place names stay readable; landmarks still go on top.
+      const beforeLabels = map
+        .getStyle()
+        .layers?.find((l) => l.type === "symbol")?.id;
+
       map.addLayer({
         id: "districts-fill",
         type: "fill",
         source: "districts",
         paint: districtFillPaint(propsRef.current.activeDistrictId, null),
-      });
+      }, beforeLabels);
       map.addLayer({
         id: "districts-line",
         type: "line",
         source: "districts",
-        paint: { "line-color": "#1565c0", "line-width": 1.2, "line-opacity": 0.85 },
-      });
+        paint: { "line-color": "#ffffff", "line-width": 1.1, "line-opacity": 0.55 },
+      }, beforeLabels);
+      map.addLayer({
+        id: "districts-glow",
+        type: "line",
+        source: "districts",
+        filter: districtIdFilter(propsRef.current.activeDistrictId),
+        paint: {
+          "line-color": districtColorExpr(),
+          "line-width": 12,
+          "line-blur": 8,
+          "line-opacity": 0.45,
+        },
+      }, beforeLabels);
+      map.addLayer({
+        id: "districts-active",
+        type: "line",
+        source: "districts",
+        filter: districtIdFilter(propsRef.current.activeDistrictId),
+        paint: { "line-color": "#ffffff", "line-width": 2.6 },
+      }, beforeLabels);
       map.addLayer({
         id: "congestion",
         type: "fill",
@@ -157,7 +197,7 @@ export default function MapCanvas({
           visibility: propsRef.current.showCongestion ? "visible" : "none",
         },
         paint: congestionPaint(),
-      });
+      }, beforeLabels);
       map.addLayer({
         id: "landmarks",
         type: "circle",
@@ -165,7 +205,7 @@ export default function MapCanvas({
         filter: landmarkFilter(propsRef.current.activeDistrictId),
         paint: {
           "circle-radius": 6,
-          "circle-color": "#ff7043",
+          "circle-color": districtColorExpr("district"),
           "circle-stroke-color": "#ffffff",
           "circle-stroke-width": 2,
         },
@@ -192,7 +232,24 @@ export default function MapCanvas({
       });
 
       readyRef.current = true;
+      // Breathing congestion cells; skipped under reduced motion.
+      const pulse = () => {
+        if (!mapRef.current) return;
+        if (
+          !propsRef.current.reducedMotion &&
+          map.getLayoutProperty("congestion", "visibility") === "visible"
+        ) {
+          map.setPaintProperty(
+            "congestion",
+            "fill-opacity",
+            congestionPulseOpacity(performance.now() / 1000),
+          );
+        }
+        rafRef.current = requestAnimationFrame(pulse);
+      };
+      rafRef.current = requestAnimationFrame(pulse);
       paintDistricts();
+      moveCamera();
       map.setFilter(
         "landmarks",
         landmarksFilterFor(
@@ -204,6 +261,7 @@ export default function MapCanvas({
     });
 
     return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       map.remove();
       mapRef.current = null;
       readyRef.current = false;
@@ -216,16 +274,14 @@ export default function MapCanvas({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const opts = { center: view.center, zoom: view.zoom };
-    if (cameraMove(reducedMotion) === "flyTo") map.flyTo(opts);
-    else map.jumpTo(opts);
+    moveCamera();
     paintDistricts();
     map.setFilter(
       "landmarks",
       landmarksFilterFor(activeDistrictId, showAllLandmarks),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDistrictId, view, reducedMotion, showAllLandmarks]);
+  }, [activeDistrictId, view, mode, reducedMotion, showAllLandmarks]);
 
   // Congestion overlay toggle.
   useEffect(() => {

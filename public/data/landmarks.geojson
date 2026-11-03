@@ -9,6 +9,7 @@
     { "type": "Feature", "properties": { "district": "jakbar", "name": "Tanjung Duren" }, "geometry": { "type": "Point", "coordinates": [106.7906, -6.1800] } },
     { "type": "Feature", "properties": { "district": "jaksel", "name": "Blok M" }, "geometry": { "type": "Point", "coordinates": [106.7983, -6.2446] } },
     { "type": "Feature", "properties": { "district": "jaksel", "name": "Kemang" }, "geometry": { "type": "Point", "coordinates": [106.8140, -6.2600] } },
+    { "type": "Feature", "properties": { "district": "jaksel", "name": "M Bloc Space" }, "geometry": { "type": "Point", "coordinates": [106.7988, -6.2432] } },
     { "type": "Feature", "properties": { "district": "jakut", "name": "PIK" }, "geometry": { "type": "Point", "coordinates": [106.7400, -6.1100] } },
     { "type": "Feature", "properties": { "district": "jakut", "name": "Glodok (Pecinan)" }, "geometry": { "type": "Point", "coordinates": [106.8136, -6.1480] } },
     { "type": "Feature", "properties": { "district": "jaktim", "name": "Pulogadung (JIEP)" }, "geometry": { "type": "Point", "coordinates": [106.9070, -6.1850] } }

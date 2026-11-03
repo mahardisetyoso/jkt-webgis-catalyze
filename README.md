@@ -23,9 +23,9 @@ The five chapters:
 
 ```bash
 npm install
+cp .env.example .env.local   # then paste your MapTiler key (optional, see "Basemap")
 npm run data:districts    # build district boundaries from GADM (downloads once, cached)
 npm run data:congestion   # build Sudirman congestion geohash cells
-npm run data:images       # generate district placeholder images
 npm run dev               # http://localhost:3000
 ```
 
@@ -34,8 +34,8 @@ npm test          # unit tests (Vitest)
 npm run build     # static export to ./out
 ```
 
-The generated data (`public/data/*.geojson`) and images (`public/images/*.svg`)
-are committed, so `npm run dev` works without the data steps; rerun them only to
+The generated data (`public/data/*.geojson`) and district photos
+(`public/images/photos/`) are committed, so `npm run dev` works without the data steps; rerun them only to
 regenerate.
 
 ## System architecture
@@ -54,7 +54,7 @@ are generic.
 
 ```
 Browser (static SPA)  ──GET /data/*.geojson──▶  Vercel Edge CDN
-                      ──XYZ tiles──────────────▶  OpenStreetMap (POC basemap)
+                      ──vector tiles───────────▶  MapTiler (OSM raster fallback)
 ```
 
 **Backend is static-first, server-optional.** The data "API" is static GeoJSON
@@ -62,6 +62,28 @@ over the CDN; the only external call is the basemap tile endpoint. A dynamic tie
 (vector tiles via PMTiles / a tile server over PostGIS, a serverless feature API,
 or ArcGIS REST) is designed but deferred until a concrete trigger — see
 [`docs/architecture.md`](docs/architecture.md) §6 for the thresholds.
+
+## Basemap
+
+The basemap is **configuration, not code** (`lib/basemap.ts`):
+
+| `NEXT_PUBLIC_MAPTILER_KEY` | Basemap | Use |
+|---|---|---|
+| set | MapTiler vector style (`dataviz-dark` by default, override with `NEXT_PUBLIC_MAPTILER_STYLE`) | production / Vercel |
+| empty | OpenStreetMap standard raster tiles, darkened | local dev, previews |
+
+Story layers are inserted beneath the vector style's first label layer, so street and
+place names stay readable over the coloured districts.
+
+Why not OSM tiles in production: the [OSMF Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/)
+allows light, attributed, browser-originated use, but it is best-effort with no SLA and
+access can be withdrawn without notice. A keyed provider (domain-restricted key) gives
+an SLA; the zero-server alternative is self-hosted **PMTiles** on the CDN (§6 of the
+architecture doc).
+
+**On Vercel:** Project → Settings → Environment Variables → add
+`NEXT_PUBLIC_MAPTILER_KEY`, then redeploy (`NEXT_PUBLIC_*` values are inlined at build
+time). In MapTiler Cloud, restrict the key to your Vercel domain(s).
 
 ## Data strategy
 
@@ -101,14 +123,17 @@ QA, analytics): ~3–4 weeks.
 
 ## Features
 
-- Linear scrollytelling with choreographed camera moves between districts
+- Linear scrollytelling with choreographed, pitched camera moves between districts;
+  camera padding keeps the subject clear of the chapter card (desktop and mobile)
+- Chapter cards with district photos (two side by side where a district has two faces)
+- Chapter-dot navigator, per-district accent colours, glowing active boundary
 - Active-district highlight (others dimmed) + **hover-to-highlight** with name tooltip
-- Clustered-free landmark markers per district
-- **Sudirman traffic-congestion overlay** (geohash cells, red = *macet*)
+- Landmark markers per district, coloured by district
+- **Sudirman traffic-congestion overlay** (geohash cells, red = *macet*, pulsing)
 - **Explore mode** after the story: free pan/zoom + layer toggles
 - Respects `prefers-reduced-motion` (instant camera instead of fly)
 - Trilingual-ready content model (currently Bahasa Indonesia)
-- Fully static, Vercel-ready; 42 unit tests
+- Fully static, Vercel-ready; 60 unit tests
 
 ## Deploying to Vercel
 
@@ -141,7 +166,7 @@ components/      MapCanvas, Scroller, Chapter, StoryApp, ExplorePanel
 lib/            chapters, mapViews, mapLayers, useScrollChapter
 scripts/        build-districts / build-congestion / build-images
 public/data/     districts, landmarks, congestion GeoJSON
-public/images/   district placeholder cards (+ CREDITS.md)
+public/images/   district photos in photos/ (+ CREDITS.md)
 tests/           Vitest suites
 docs/            architecture.md + implementation plan
 ```
@@ -149,6 +174,6 @@ docs/            architecture.md + implementation plan
 ## Credits & license
 
 - Boundaries © GADM 4.1 (non-commercial; see data-strategy note above).
-- Basemap © OpenStreetMap contributors.
-- District images: original placeholders, CC0 — see
+- Basemap © MapTiler © OpenStreetMap contributors (fallback: © OpenStreetMap contributors).
+- District photos — sources and licenses in
   [`public/images/CREDITS.md`](public/images/CREDITS.md).

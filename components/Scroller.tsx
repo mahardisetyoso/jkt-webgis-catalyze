@@ -8,9 +8,10 @@ import type { Chapter as ChapterType } from "@/lib/chapters";
 type Props = {
   chapters: ChapterType[];
   onChapter: (index: number) => void;
+  active?: number;
 };
 
-export default function Scroller({ chapters, onChapter }: Props) {
+export default function Scroller({ chapters, onChapter, active = 0 }: Props) {
   const cbRef = useRef(onChapter);
   cbRef.current = onChapter;
 
@@ -30,8 +31,8 @@ export default function Scroller({ chapters, onChapter }: Props) {
 
   return (
     <div className="scroller">
-      {chapters.map((chapter) => (
-        <Chapter key={chapter.id} chapter={chapter} />
+      {chapters.map((chapter, i) => (
+        <Chapter key={chapter.id} chapter={chapter} index={i} active={i === active} />
       ))}
     </div>
   );
