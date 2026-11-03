@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="Segoe UI, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00695c"/>
+      <stop offset="1" stop-color="#101828"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g)"/>
+  <g fill="#ffffff" opacity="0.08">
+    <circle cx="1000" cy="160" r="220"/>
+    <circle cx="180" cy="680" r="160"/>
+  </g>
+  <text x="80" y="120" fill="#ffffff" opacity="0.75" font-size="30" letter-spacing="6">DKI JAKARTA</text>
+  <text x="80" y="360" fill="#ffffff" font-size="96" font-weight="700">Jakarta Utara</text>
+  <text x="80" y="440" fill="#ffffff" opacity="0.92" font-size="48" font-weight="500">Perdagangan &amp; Pecinan</text>
+  <rect x="80" y="620" width="264" height="4" fill="#ffffff" opacity="0.5"/>
+  <text x="80" y="690" fill="#ffffff" opacity="0.88" font-size="34">PIK · Glodok</text>
+</svg>

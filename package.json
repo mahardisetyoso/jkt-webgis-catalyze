@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "data:districts": "node scripts/build-districts.mjs",
-    "data:congestion": "node scripts/build-congestion.mjs"
+    "data:congestion": "node scripts/build-congestion.mjs",
+    "data:images": "node scripts/build-images.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^4.7.1",
