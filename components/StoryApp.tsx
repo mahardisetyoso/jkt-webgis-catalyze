@@ -51,7 +51,7 @@ export default function StoryApp() {
   const isStory = view === "story";
   const isGallery = view === "gallery";
   const isExplore = view === "explore";
-  const mapMode = isExplore ? "explore" : "story";
+  const mapMode: "story" | "explore" = isExplore ? "explore" : "story";
 
   const mapProps = isExplore
     ? {
