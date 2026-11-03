@@ -22,24 +22,23 @@ The narrative (simple, Bahasa Indonesia):
 | 4 | Jakarta Utara | Trade & Chinatown | PIK, Glodok |
 | 5 | Jakarta Timur | Manufacturing industry | Pulogadung |
 
-The Jakarta Pusat chapter additionally reveals a **congestion overlay**: geohash cells tracing the Sudirman corridor, styled red to signal *macet* (heavy traffic). It is static sample data in the POC, with a live-feed upgrade path in §10.
+The Jakarta Pusat chapter additionally reveals a **congestion overlay**: geohash cells tracing the Sudirman corridor, styled red to signal *macet* (heavy traffic). It is static sample data in the POC; the live-traffic version is part of the production backend in §6.
 
 ---
 
-## 2. Architectural principle: static-first, server-optional
+## 2. Architectural principle: live backend primary, static fallback
 
-The reverse-engineering of the reference site revealed the core insight worth carrying forward: **a storytelling WebGIS needs almost no backend.** The reference is a config-driven SPA whose "backend" is static TopoJSON/GeoJSON files plus a tile CDN, with an *optional* ArcGIS REST path for heavier layers.
+The production architecture is a **live open-source geospatial backend** — data authored in **QGIS**, stored in **PostGIS**, served to the web by **GeoServer** as standard OGC services — with the Next.js/MapLibre frontend as its consumer. A fully **static export** (bundled GeoJSON on a CDN) is retained as a deliberate **fallback / offline / demo** mode, and is what this repository actually ships today.
 
-This project adopts the same stance, modernized:
+Why a real backend is the primary target: a production WebGIS needs server-side spatial queries (bbox/attribute filtering), centrally managed cartography, tiling for large datasets, multi-source layer management, and **live data** (e.g. traffic congestion) — none of which static files provide at scale. The static fallback stays valuable for low-cost, read-only, slow-changing content and offline demos.
 
-- **Static-first** — the entire experience (HTML, JS, geodata) ships as static assets from a CDN. No app server to run, scale, or secure for the POC.
-- **Server-optional** — a dynamic tier (vector-tile server, feature API) is defined but *deferred*. The architecture names exactly when and how to graduate to it (§6, §10), so the POC stays lean without painting us into a corner.
-
-This is the single most important design decision and it drives everything below.
+The enabling decision that keeps both modes cheap: the frontend talks only to a MapLibre **`source` abstraction**, so pointing a layer at a GeoServer WFS/WMTS endpoint instead of a static `/data/*.geojson` file is a config change, not a rewrite. §6 specifies the live backend; §8 covers the static-delivery path this repo ships.
 
 ---
 
-## 3. System context
+## 3. System context (static-delivery mode)
+
+This section shows the **static fallback** topology that this repo ships. The production topology — QGIS → PostGIS → GeoServer in the request path — is in §6.
 
 ```mermaid
 flowchart LR
@@ -164,44 +163,78 @@ stateDiagram-v2
 
 ---
 
-## 6. Backend and API strategy
+## 6. Backend architecture (PostGIS · GeoServer · QGIS)
 
-The brief asks to focus on "backend integration/APIs." Here is the honest, tiered answer.
+The brief asks to focus on "backend integration/APIs." The production backend is the open-source WebGIS stack: data authored in **QGIS**, stored in **PostGIS**, served as OGC web services by **GeoServer**, and consumed by the Next.js/MapLibre frontend over HTTP. QGIS is the authoring/analysis desktop tool (not in the request path); GeoServer is the serving layer.
 
-### 6.1 Tier 0 — what the POC actually uses (no backend)
+### 6.1 Roles
 
-```mermaid
-flowchart LR
-    app[SPA] -->|GET /data/*.geojson| cdn{{Vercel CDN}}
-    app -->|GET XYZ tiles| tiles[(Tile provider)]
-```
+| Component | Role | Notes |
+|-----------|------|-------|
+| **QGIS Desktop** | Authoring & analysis | Ingest and clean source data, run spatial analysis, design cartography, and author styles (export **SLD/QML**). Connects directly to PostGIS over the DB connection and publishes layers/styles to GeoServer. The analyst's cockpit — used by people, not called by the app. |
+| **PostGIS** | Spatial source of truth | PostgreSQL + PostGIS. Tables for districts / landmarks / congestion, **GiST** spatial indexes, SRID-managed geometry, SQL views for derived layers, and the mutable tables that hold **live data** (e.g. current congestion speeds). |
+| **GeoServer** | OGC service layer | Publishes PostGIS layers as **WFS** (vector → GeoJSON), **WMS**, and **WMTS / vector tiles**; applies SLD styling; caches tiles via **GeoWebCache**. This is the real geospatial "API" the frontend hits. |
+| **Frontend (Next.js + MapLibre)** | Consumer | MapLibre `source`s point at GeoServer WFS/WMTS endpoints instead of static GeoJSON. Scrollytelling, highlight, and explore logic are unchanged. |
 
-- **Data "API" = static files over CDN.** `jakarta-districts.geojson` and `landmarks.geojson` are fetched as plain HTTP GETs. The CDN is the API gateway; HTTP caching + immutable asset hashing is the whole performance story.
-- **Basemap API = XYZ tile endpoint** of a tile provider (MapLibre demo tiles for dev; MapTiler/other free-tier with a key for production polish). This is the only external service call.
-- **Analytics (optional)** = a client beacon (Plausible/GA4).
+> *Alternative:* **QGIS Server** can itself serve OGC services straight from a QGIS project. Here GeoServer is the serving layer and QGIS stays the authoring tool — a cleaner split of "author" vs "serve" for a team.
 
-This is sufficient because the data is small, read-only, and changes rarely — exactly the reference site's profile.
-
-### 6.2 Tier 1 — when to add a dynamic backend (deferred, designed)
-
-Graduate a layer from static to dynamic when **any** of these thresholds is crossed:
-
-| Trigger | Dynamic solution |
-|---------|------------------|
-| GeoJSON per layer > ~1–2 MB, or many layers | **Vector tiles** (PMTiles on the CDN — still serverless — or a tile server: Martin / pg_tileserv over PostGIS) |
-| Need server-side spatial queries / filtering by bbox or attribute | **Feature API**: Next.js Route Handlers (serverless) or an external **ArcGIS REST / OGC API – Features** endpoint (the reference site's optional path) |
-| Data edited by non-developers | **Headless CMS** (Sanity/Strapi) feeding the chapter config + a build hook |
-| Live/near-real-time layers (e.g., flooding, traffic) | Polled REST/GeoServices or WebSocket feed into a GL source |
+### 6.2 Container topology
 
 ```mermaid
 flowchart LR
-    app[SPA] -->|vector tiles| pmtiles[(PMTiles on CDN)]
-    app -->|/api/features?bbox=| fn[Serverless Route Handler]
-    fn --> pg[(PostGIS)]
-    app -->|REST f=json| arcgis[(ArcGIS / OGC API Features)]
+    analyst[QGIS Desktop<br/>authoring · analysis · SLD]
+    pg[(PostGIS<br/>spatial database)]
+    gs[GeoServer<br/>WFS · WMS · WMTS<br/>+ GeoWebCache]
+    gw{{API gateway / CDN<br/>reverse proxy · TLS · cache · CORS}}
+    app[Next.js + MapLibre<br/>browser]
+    feed[(Traffic feed<br/>provider / open data)]
+
+    analyst -->|edit geometry + attributes| pg
+    analyst -->|publish layers + styles| gs
+    gs -->|JDBC read| pg
+    feed -->|ETL upsert| pg
+    app -->|WFS GeoJSON · WMTS tiles| gw
+    gw --> gs
 ```
 
-The key architectural property: **the frontend talks to a GL `source` abstraction, so swapping a GeoJSON source for a vector-tile or feature-API source is a config change, not a rewrite.** That is why static-first does not become technical debt.
+### 6.3 Request and update flow
+
+```mermaid
+sequenceDiagram
+    participant M as MapLibre (browser)
+    participant G as API gateway
+    participant S as GeoServer
+    participant P as PostGIS
+    M->>G: GET WMTS tile z/x/y (districts, thematic)
+    G-->>M: cached tile (GeoWebCache) or render-through
+    M->>G: GET WFS GetFeature bbox=… (landmarks / congestion)
+    G->>S: proxy
+    S->>P: SQL over GiST index (bbox + attribute filter)
+    P-->>S: rows
+    S-->>M: GeoJSON
+    Note over P,S: live congestion — ETL upserts speeds into PostGIS;<br/>GeoServer serves fresh cells via WFS (and reseeds WMTS)
+```
+
+### 6.4 What the frontend consumes
+
+- **Interactive vector layers** (districts, landmarks, congestion) → **WFS `GetFeature`** returning GeoJSON, loaded into the same MapLibre `geojson` sources. Moving from `/data/jakarta-districts.geojson` to `…/geoserver/wfs?...&outputFormat=application/json` is a URL swap.
+- **Basemap and heavy thematic layers** → **WMTS / vector tiles** from GeoServer + GeoWebCache (so large or frequently-drawn layers are pre-rendered, not re-queried per view).
+- The MapLibre `source` abstraction (already in `MapCanvas`) is what makes this swap a config change rather than a component rewrite.
+
+### 6.5 Gateway, security, caching, and deployment
+
+- **API gateway / reverse proxy** (nginx, a Vercel rewrite, or a cloud load balancer) sits in front of GeoServer for **TLS, CORS, rate-limiting, and response caching** — GeoServer's admin is never public.
+- **Least privilege:** GeoServer connects to PostGIS with a **read-only role**; writes happen only through QGIS (authors) or the ETL job (live feed).
+- **Caching:** GeoWebCache for tiles + CDN edge caching; bounded/parameterized WFS requests to avoid unbounded scans.
+- **Deployment:** **Docker Compose** for `postgis`, `geoserver`, and the gateway (reproducible locally and on a VM); QGIS runs on each analyst's machine. Managed option: PostGIS on RDS / Cloud SQL, GeoServer on a container service or VM, tiles fronted by a CDN.
+
+### 6.6 Static fallback (what this repo ships)
+
+The static export (bundled GeoJSON on a CDN, §8) is kept as an **offline / demo / low-cost** mode and is the POC in this repository. Because both modes feed the same MapLibre `source`s, the identical frontend runs against either the static files or the live GeoServer endpoints — the backend can be stood up without touching app code.
+
+### 6.7 Trade-offs (honest)
+
+A live backend buys server-side spatial queries, centrally managed styling, tiling, multi-source management, and live data — at the cost of **infrastructure to run, scale, secure, back up, and pay for** (database, GeoServer, gateway). Static delivery wins on cost, ops simplicity, and resilience for small, read-only, slow-changing data. The pragmatic answer is **per dataset**: boundaries rarely change → tile and cache aggressively; congestion is live → PostGIS + WFS.
 
 ---
 
@@ -295,15 +328,15 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    poc[POC<br/>static GeoJSON<br/>5 districts] --> v1[v1<br/>vector tiles · PMTiles<br/>CMS-driven chapters]
-    v1 --> v2[v2<br/>feature API · PostGIS<br/>multi-language UI]
-    v2 --> v3[v3<br/>live layers<br/>user-selectable datasets]
+    poc[Static POC<br/>bundled GeoJSON] --> v1[PostGIS + GeoServer<br/>live WFS / WMTS layers]
+    v1 --> v2[GeoWebCache + gateway<br/>CMS chapters · EN/ID]
+    v2 --> v3[Live traffic feed<br/>user-selectable datasets]
 ```
 
 1. **POC (this build):** static data, scripted narrative, five districts, hover-highlight, static Sudirman congestion overlay, explore mode.
-2. **v1:** move geometry to PMTiles/vector tiles; narrative + images managed in a headless CMS with a Vercel deploy hook; EN/ID language toggle.
-3. **v2:** PostGIS + serverless feature API for attribute/bbox queries; richer explore-mode layer catalog.
-4. **v3:** **live traffic feed** replacing the static congestion sample (poll a provider / open data into the geohash layer, recoloring cells by real-time speed); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
+2. **v1 — stand up the backend (§6):** load the geodata into **PostGIS**, publish it through **GeoServer** (WFS + WMTS), author styles in **QGIS**, and point the MapLibre sources at GeoServer. The static export becomes the fallback.
+3. **v2:** GeoWebCache + API gateway tuning; narrative + images managed in a headless CMS with a deploy hook; EN/ID language toggle; richer explore-mode layer catalog.
+4. **v3:** **live traffic feed** replacing the static congestion sample (ETL into PostGIS, GeoServer serves fresh cells recolored by real-time speed); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
 
 ---
 
@@ -312,8 +345,11 @@ flowchart LR
 | Decision | Chosen | Alternatives considered | Rationale |
 |----------|--------|-------------------------|-----------|
 | Map engine | MapLibre GL | Mapbox GL (token/cost), Leaflet (raster, like reference), ArcGIS JS (heavy/licensed) | Open, free, vector, smooth camera; no vendor lock-in |
-| Backend | Static-first | Always-on server, serverless-first | Data is small & read-only; matches reference; cheapest; defer servers until a trigger (§6.2) |
-| Data format | GeoJSON (POC) | TopoJSON (reference), Shapefile, vector tiles | Simplest to author/debug small data; upgrade path to PMTiles defined |
+| Backend | Live **PostGIS + GeoServer** (static fallback) | Pure static; serverless feature API; ArcGIS/managed | Open-source OGC stack: server-side spatial queries, central styling, tiling, live data; static kept for offline/demo (§6) |
+| Spatial DB | **PostGIS** | SpatiaLite, Mongo/Elastic geo | De-facto OSS spatial DB; GiST indexes, rich SQL analysis; first-class in both QGIS and GeoServer |
+| OGC server | **GeoServer** | QGIS Server, pg_tileserv/Martin, MapServer | Mature WFS/WMS/WMTS + GeoWebCache + SLD, broad formats; QGIS Server noted as the alternative (§6.1) |
+| Authoring | **QGIS Desktop** | ArcGIS Pro, FME, hand-coded ETL | Free, strong cartography/analysis, native PostGIS editing + GeoServer publishing |
+| Data format | GeoJSON (static mode) / WFS+WMTS (live) | TopoJSON, Shapefile, PMTiles | GeoJSON simplest for the static POC; GeoServer serves WFS GeoJSON + WMTS tiles in production |
 | Boundary source | **GADM 4.1** (ADM2) | geoBoundaries (CC BY), BPS, Jakarta Satu, OSM | User choice; complete IDN ADM2. Caveat: GADM restricts redistribution/commercial use (§7.1) — swap to geoBoundaries for a public/commercial build |
 | Congestion encoding | **Geohash cells** (precision 7) | GPS polyline, H3 hexagons, segment IDs | Compact, grid-aligned, trivially colorable; cells map cleanly to a GL fill layer; ngeohash is tiny |
 | Projection | Web Mercator | Custom polar stereographic (reference) | Equatorial location makes custom CRS unnecessary complexity |
@@ -326,7 +362,7 @@ flowchart LR
 
 **`lancastersound.wwf.ca` (reverse-engineered):** a ~2016 RequireJS SPA using **Leaflet 0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937), a **Mapbox classic raster** basemap, and **static TopoJSON/GeoJSON** data (with an optional ArcGIS REST path). Three modes — scripted *story*, *gallery* of clustered media, free-explore *layers* — all driven by declarative JSON config. Narrative scenes are largely pre-rendered PNGs.
 
-**This project keeps** the config-driven narrative model, named camera views, static-first data, and the story→explore arc. **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
+**This project keeps** the config-driven narrative model, named camera views, a static-delivery fallback mode, and the story→explore arc (and adds a live PostGIS + GeoServer backend as the production target, §6). **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
 
 ---
 
