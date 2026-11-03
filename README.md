@@ -183,13 +183,34 @@ _Interactive version (layer filter, click a card for its role and rationale):
 [`docs/design/tech-stack.html`](docs/design/tech-stack.html). Full table with versions,
 status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 
-**Frontend (static, in repo):** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 ·
-Scrollama 3 · MapTiler · Vitest + Testing Library · Vercel.
-**Live data backend (designed, not stood up yet):** PostGIS · GeoServer (WFS/WMTS +
-GeoWebCache) · nginx gateway behind a Vercel `/geo/*` rewrite · Docker Compose — see [`docs/architecture.md`](docs/architecture.md) §6.
-**Authoring:** QGIS Desktop (edits PostGIS, publishes styles to GeoServer).
-**Data tooling:** GADM 4.1 · mapshaper · ngeohash (in repo) · GDAL `ogr2ogr` for the
-PostGIS → GeoJSON snapshot (live mode).
+**Frontend (static, in this repo)**
+
+- **Next.js 14** (App Router, static export) — builds the whole app to static HTML/JS; no server runtime.
+- **TypeScript** — types the chapter/camera/geo config so bad ids or coordinates fail at build.
+- **MapLibre GL JS 4** — the interactive WebGL map: camera moves, district highlight, hover tooltip, landmarks, congestion layer.
+- **Scrollama 3** — fires a chapter change as each narrative panel scrolls into view.
+- **MapTiler** — vector basemap (domain-restricted key); darkened OSM raster as the keyless dev fallback.
+- **Vitest + Testing Library** — unit tests (70) for the chapter/camera model, paint helpers, and components.
+- **Vercel** — hosts the static build on its edge CDN; Git-integrated deploys with PR previews.
+
+**Live data backend (designed; not stood up yet — architecture §6)**
+
+- **PostGIS** (PostgreSQL) — spatial database; single source of truth for districts, landmarks, and congestion.
+- **GeoServer** — serves PostGIS layers as OGC services (**WFS** GeoJSON, **WMTS** tiles) with SLD styling — the data API the browser calls.
+- **GeoWebCache** — tile cache inside GeoServer; pre-renders heavy / slow-changing layers.
+- **nginx gateway** — TLS, rate-limiting, response cache; keeps GeoServer admin private, reached only via the Vercel `/geo/*` rewrite.
+- **Docker Compose** — runs PostGIS + GeoServer + gateway reproducibly (managed alt: RDS/Cloud SQL + a GeoServer container).
+
+**Authoring**
+
+- **QGIS Desktop** — edits geometry/attributes directly in PostGIS, runs spatial analysis, authors styles (SLD/QML), and publishes layers to GeoServer.
+
+**Data tooling**
+
+- **GADM 4.1** — source for the five kota boundaries.
+- **mapshaper** — simplifies boundary geometry (~13 KB output).
+- **ngeohash** — encodes the Sudirman centerline into precision-7 geohash congestion cells.
+- **GDAL `ogr2ogr`** — exports the GeoJSON snapshot from PostGIS at build time (live mode).
 
 ## Project structure
 
