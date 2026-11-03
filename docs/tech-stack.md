@@ -12,48 +12,38 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 
 ## 1. Frontend (static)
 
-| Technology | Version | Role | Status | Where |
-|---|---|---|---|---|
-| **Next.js** | 14, App Router, `output: 'export'` | Static export to `out/`; no SSR or serverless, in POC and in live mode alike | ✅ | `app/`, `next.config.mjs` |
-| **TypeScript** | — | Typed narrative and camera config; bad district ids or coordinates fail at build | ✅ | `lib/`, `types/` |
-| **MapLibre GL JS** | 4 | WebGL map: camera, district highlight, hover tooltip, landmarks, congestion layer. Its `source` abstraction reads either GeoServer or the bundled snapshot | ✅ | `components/MapCanvas.tsx`, `lib/mapLayers.ts` |
-| **Scrollama** | 3 | Fires a chapter change as each panel scrolls into view | ✅ | `lib/useScrollChapter.ts` |
-| **MapTiler** | `dataviz-dark` style | Vector basemap with a domain-restricted key; OSM raster (darkened) when no key is set | ✅ | `lib/basemap.ts` |
+- **Next.js** (14, App Router, `output: 'export'`) — static export to `out/`; no SSR or serverless, in POC and live mode alike. ✅ `app/`, `next.config.mjs`
+- **TypeScript** — typed narrative and camera config; bad district ids or coordinates fail at build. ✅ `lib/`, `types/`
+- **MapLibre GL JS** (4) — WebGL map: camera, district highlight, hover tooltip, landmarks, congestion layer; its `source` abstraction reads either GeoServer or the bundled snapshot. ✅ `components/MapCanvas.tsx`, `lib/mapLayers.ts`
+- **Scrollama** (3) — fires a chapter change as each panel scrolls into view. ✅ `components/Scroller.tsx`
+- **MapTiler** (`dataviz-dark` style) — vector basemap with a domain-restricted key; darkened OSM raster when no key is set. ✅ `lib/basemap.ts`
 
-## 2. Live geospatial backend
+## 2. Live geospatial backend (🔜 architecture §6)
 
-| Technology | Role | Status | Notes |
-|---|---|---|---|
-| **PostGIS** (PostgreSQL) | Single source of truth for districts, landmarks and congestion; GiST indexes; EPSG:4326 storage | 🔜 | Read-only roles for GeoServer and CI |
-| **GeoServer** | Serves PostGIS layers as **WFS** (GeoJSON) and **WMTS**; SLD styling | 🔜 | The data API the static app calls from the browser |
-| **GeoWebCache** | Tile cache inside GeoServer | 🔜 | Pre-renders heavy / slow-changing layers |
-| **nginx gateway** | TLS, rate limiting, response cache; keeps GeoServer admin private | 🔜 | Reached only through the Vercel `/geo/*` rewrite |
-| **Docker Compose** | Runs `postgis`, `geoserver` and the gateway reproducibly | 🔜 | Managed alternative: RDS / Cloud SQL + a GeoServer container |
+- **PostGIS** (PostgreSQL) — single source of truth for districts, landmarks and congestion; GiST indexes; EPSG:4326 storage. 🔜 read-only roles for GeoServer and CI
+- **GeoServer** — serves PostGIS layers as **WFS** (GeoJSON) and **WMTS**, with SLD styling — the data API the static app calls from the browser. 🔜
+- **GeoWebCache** — tile cache inside GeoServer; pre-renders heavy / slow-changing layers. 🔜
+- **nginx gateway** — TLS, rate limiting, response cache; keeps GeoServer admin private, reached only through the Vercel `/geo/*` rewrite. 🔜
+- **Docker Compose** — runs `postgis`, `geoserver` and the gateway reproducibly (managed alternative: RDS / Cloud SQL + a GeoServer container). 🔜
 
 ## 3. Authoring
 
-| Technology | Role | Status | Notes |
-|---|---|---|---|
-| **QGIS Desktop** | Edit geometry and attributes directly in PostGIS; spatial analysis; author styles (SLD/QML) and publish them to GeoServer | 🔜 | Used by analysts, never called by the app |
+- **QGIS Desktop** — edit geometry and attributes directly in PostGIS; spatial analysis; author styles (SLD/QML) and publish them to GeoServer. 🔜 used by analysts, never called by the app
 
 ## 4. Data pipeline
 
-| Technology | Role | Status | Where |
-|---|---|---|---|
-| **GADM 4.1** (ADM2) | Boundaries of the five kota. Today: seeds the snapshot directly. Live: seeds PostGIS once | ✅ | `scripts/build-districts.mjs` |
-| **mapshaper** | Simplifies boundary geometry (~13 KB output) | ✅ | district build |
-| **ngeohash** | Encodes the Sudirman centerline into precision-7 geohash cells (~150 m) | ✅ | `scripts/build-congestion.mjs` |
-| **GDAL / `ogr2ogr`** | Exports the GeoJSON snapshot from PostGIS before `next build`; also loads seed data into PostGIS | 🔜 | CI step, architecture §6.6 |
-| **Traffic feed ETL** | Upserts live speeds into PostGIS, replacing the static congestion sample | 🔜 | Roadmap v3 |
+- **GADM 4.1** (ADM2) — boundaries of the five kota; today seeds the snapshot directly, live it seeds PostGIS once. ✅ `scripts/build-districts.mjs`
+- **mapshaper** — simplifies boundary geometry (~13 KB output). ✅ district build
+- **ngeohash** — encodes the Sudirman centerline into precision-7 geohash cells (~150 m). ✅ `scripts/build-congestion.mjs`
+- **GDAL / `ogr2ogr`** — exports the GeoJSON snapshot from PostGIS before `next build`; also loads seed data into PostGIS. 🔜 CI step, architecture §6.6
+- **Traffic feed ETL** — upserts live speeds into PostGIS, replacing the static congestion sample. 🔜 roadmap v3
 
 ## 5. Delivery and QA
 
-| Technology | Role | Status | Where |
-|---|---|---|---|
-| **Vercel** (Edge CDN) | Hosts the static app and the bundled snapshot; Git integration builds every push. The single origin the browser talks to | ✅ | Project → Settings → Environment Variables |
-| **Vercel rewrite** `/geo/*` | Forwards live-data requests to the backend gateway, so the browser stays on one origin (no CORS) | 🔜 | `vercel.json` |
-| **GitHub** | Source, PR previews via Vercel | ✅ | — |
-| **Vitest + Testing Library** (jsdom) | Unit tests for chapter/camera model, paint helpers and components (70 tests) | ✅ | `tests/`, `vitest.config.ts` |
+- **Vercel** (Edge CDN) — hosts the static app and the bundled snapshot; Git integration builds every push; the single origin the browser talks to. ✅
+- **Vercel rewrite** `/geo/*` — forwards live-data requests to the backend gateway so the browser stays on one origin (no CORS). 🔜 `vercel.json`
+- **GitHub** — source; PR previews via Vercel. ✅
+- **Vitest + Testing Library** (jsdom) — unit tests for the chapter/camera model, paint helpers and components (70 tests). ✅ `tests/`, `vitest.config.ts`
 
 ---
 
@@ -61,10 +51,8 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 
 The frontend is the same build artifact in every mode; build-time environment variables pick the sources.
 
-| Variable | Set | Empty |
-|---|---|---|
-| `NEXT_PUBLIC_MAPTILER_KEY` | MapTiler vector basemap | OSM raster, darkened |
-| `NEXT_PUBLIC_GEO_LIVE` 🔜 | Layers read GeoServer WFS/WMTS at `/geo/*`; snapshot is the fallback | Snapshot only (today's POC) |
+- **`NEXT_PUBLIC_MAPTILER_KEY`** — set → MapTiler vector basemap; empty → darkened OSM raster.
+- **`NEXT_PUBLIC_GEO_LIVE`** 🔜 — set → layers read GeoServer WFS/WMTS at `/geo/*` (snapshot is the fallback); empty → snapshot only (today's POC).
 
 ## Why these, not the alternatives
 

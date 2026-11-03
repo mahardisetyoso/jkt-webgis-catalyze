@@ -165,15 +165,26 @@ QA, analytics): ~3–4 weeks.
 
 ## Reference and approach
 
-The reference, `lancastersound.wwf.ca`, is a ~2016 RequireJS SPA using **Leaflet
-0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937), a **Mapbox classic
-raster** basemap, and **static TopoJSON/GeoJSON** data (with an optional ArcGIS REST
-path), driven by declarative JSON config across three modes — scripted *story*,
-*gallery*, and free-explore *layers*. This project keeps its best ideas (config-driven
-narrative, named camera views, a static-delivery fallback, story→explore arc) and
-modernizes the stack (MapLibre + Next.js + Scrollama over a PostGIS + GeoServer backend),
-uses real DOM text instead of pre-rendered PNG scenes, and drops the custom projection
-because Jakarta is equatorial.
+**The reference** — `lancastersound.wwf.ca`, a ~2016 RequireJS SPA:
+
+- **Leaflet 0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937)
+- **Mapbox classic raster** basemap
+- **Static TopoJSON/GeoJSON** data, with an optional ArcGIS REST path
+- Declarative JSON config driving three modes — scripted *story*, *gallery*, and free-explore *layers*
+- Narrative scenes largely **pre-rendered PNGs**
+
+**What this project keeps:**
+
+- Config-driven narrative (data, not code)
+- Named camera views
+- A static-delivery fallback
+- The story → gallery → explore arc
+
+**What it changes:**
+
+- **MapLibre + Next.js + Scrollama** over a **PostGIS + GeoServer** backend (vs RequireJS + Leaflet)
+- **Real DOM text** for narrative instead of pre-rendered PNG scenes (accessibility + SEO)
+- **Drops the custom projection** — Jakarta is equatorial, so Web Mercator is fine
 
 ## Tech stack
 
