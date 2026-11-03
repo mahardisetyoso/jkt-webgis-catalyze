@@ -14,3 +14,6 @@ if (!window.matchMedia) {
     dispatchEvent: () => false,
   }));
 }
+
+// jsdom defines scrollTo but only logs "Not implemented"; replace it with a no-op.
+window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
