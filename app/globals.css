@@ -27,6 +27,113 @@ body {
 .scroller {
   position: relative;
   z-index: 2;
+  margin-top: -100vh;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 14px 20px;
+  background: linear-gradient(
+    to bottom,
+    rgba(11, 16, 32, 0.85),
+    rgba(11, 16, 32, 0)
+  );
+  color: #fff;
+  pointer-events: none;
+}
+
+.app-header .brand {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.app-header .tagline {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.explore-cta {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem 5rem;
+  pointer-events: none;
+}
+
+.explore-cta button {
+  pointer-events: auto;
+  font-size: 1.05rem;
+  padding: 14px 26px;
+  border: none;
+  border-radius: 999px;
+  background: #1565c0;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.explore-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.explore-panel {
+  pointer-events: auto;
+  position: absolute;
+  top: 72px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  min-width: 210px;
+}
+
+.explore-panel h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #14213d;
+}
+
+.explore-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.95rem;
+  color: #33415c;
+  cursor: pointer;
+}
+
+.back-btn {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #14213d;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 480px) {
+  .app-header .tagline {
+    display: none;
+  }
 }
 
 .step {

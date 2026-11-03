@@ -17,25 +17,31 @@ type Props = {
   view: MapView;
   mode: Mode;
   showCongestion: boolean;
+  showAllLandmarks: boolean;
   reducedMotion: boolean;
 };
 
+// Explore shows every landmark (null filter); the story shows only the active
+// district's.
+function landmarksFilterFor(activeId: string | null, showAll: boolean) {
+  return showAll ? null : landmarkFilter(activeId);
+}
+
+// Keyless OpenStreetMap raster tiles for the POC. A production build should use a
+// keyed vector-tile provider (e.g. MapTiler) — see docs/architecture.md.
 const BASEMAP: StyleSpecification = {
   version: 8,
   sources: {
-    carto: {
+    osm: {
       type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      ],
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
       tileSize: 256,
+      maxzoom: 19,
       attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     },
   },
-  layers: [{ id: "carto", type: "raster", source: "carto" }],
+  layers: [{ id: "osm", type: "raster", source: "osm" }],
 };
 
 const HANDLER_KEYS = [
@@ -61,6 +67,7 @@ export default function MapCanvas({
   view,
   mode,
   showCongestion,
+  showAllLandmarks,
   reducedMotion,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -73,9 +80,17 @@ export default function MapCanvas({
     view,
     mode,
     showCongestion,
+    showAllLandmarks,
     reducedMotion,
   });
-  propsRef.current = { activeDistrictId, view, mode, showCongestion, reducedMotion };
+  propsRef.current = {
+    activeDistrictId,
+    view,
+    mode,
+    showCongestion,
+    showAllLandmarks,
+    reducedMotion,
+  };
 
   function paintDistricts() {
     const map = mapRef.current;
@@ -178,7 +193,13 @@ export default function MapCanvas({
 
       readyRef.current = true;
       paintDistricts();
-      map.setFilter("landmarks", landmarkFilter(propsRef.current.activeDistrictId));
+      map.setFilter(
+        "landmarks",
+        landmarksFilterFor(
+          propsRef.current.activeDistrictId,
+          propsRef.current.showAllLandmarks,
+        ),
+      );
       setInteraction(map, mapInteractive(propsRef.current.mode));
     });
 
@@ -199,9 +220,12 @@ export default function MapCanvas({
     if (cameraMove(reducedMotion) === "flyTo") map.flyTo(opts);
     else map.jumpTo(opts);
     paintDistricts();
-    map.setFilter("landmarks", landmarkFilter(activeDistrictId));
+    map.setFilter(
+      "landmarks",
+      landmarksFilterFor(activeDistrictId, showAllLandmarks),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDistrictId, view, reducedMotion]);
+  }, [activeDistrictId, view, reducedMotion, showAllLandmarks]);
 
   // Congestion overlay toggle.
   useEffect(() => {
