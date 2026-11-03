@@ -40,18 +40,22 @@ regenerate.
 
 ## System architecture
 
-[![Architecture diagram: production lane (QGIS → PostGIS → GeoServer → Gateway/CDN), static lane (data scripts → GeoJSON → next build → Vercel), and basemap lane (MapTiler with OSM fallback), all feeding the Next.js + MapLibre browser client](docs/design/architecture.png)](docs/design/architecture.html)
+[![Architecture diagram: live data lane (QGIS → PostGIS → GeoServer → gateway) and static frontend lane (GeoJSON snapshot exported from PostGIS → next build → Vercel), plus the basemap lane, all feeding the static Next.js + MapLibre app in the browser](docs/design/architecture.png)](docs/design/architecture.html)
 
-_Interactive version (animated data flow, Production/Static mode toggle, click a node for details):
+_Interactive version (animated data flow, live/static mode toggle, click a node for details):
 [`docs/design/architecture.html`](docs/design/architecture.html) — open it locally in a browser._
 
-The **production target** is a live open-source geospatial backend: data authored in
-**QGIS**, stored in **PostGIS**, served as OGC services (**WFS / WMTS**) by
-**GeoServer**, and consumed by a **Next.js + MapLibre GL** frontend. This repository
-ships the **static-export fallback** of that frontend — the same app reading bundled
-GeoJSON from the CDN instead of GeoServer — which is what runs on Vercel today.
+**Static frontend, live geospatial backend.** The app is a **Next.js static export** on
+the Vercel CDN — no app server, now or in production. The *data* is live: authored in
+**QGIS**, stored in **PostGIS**, and served by **GeoServer** as OGC services
+(**WFS / WMTS**), which the static app fetches from the browser. At build time a
+**GeoJSON snapshot is exported from PostGIS** and bundled as the fallback, so the map
+still works when GeoServer is down and the fallback never drifts from the live data.
 
-The frontend behaves identically in both modes: a single full-viewport MapLibre map
+This repository runs that frontend in **snapshot-only mode**: the backend is not stood
+up yet, so the snapshot is seeded by build scripts from GADM and sample data.
+
+The app behaves identically in both modes: a single full-viewport MapLibre map
 sits sticky behind scrolling narrative panels; **Scrollama** fires a chapter change as
 each panel enters view, flying the camera to that district, highlighting its boundary
 (dimming the others), revealing its landmarks, and — for Jakarta Pusat — showing the
@@ -63,19 +67,17 @@ what each chapter says, which photos it shows, and where the camera goes. Compon
 are generic.
 
 ```
-Production:          QGIS ─▶ PostGIS ─▶ GeoServer (WFS/WMTS) ─▶ gateway/CDN ─▶ browser
-Static (this repo):  bundled GeoJSON ─▶ Vercel Edge CDN ─▶ browser
-                     basemap tiles   ─▶ MapTiler (OSM raster fallback)
+App (always):   next build ─▶ Vercel Edge CDN ─▶ browser            (HTML + JS)
+Live data:      QGIS ─▶ PostGIS ─▶ GeoServer (WFS/WMTS) ─▶ gateway ─▶ browser
+Fallback data:  PostGIS ─▶ ogr2ogr snapshot ─▶ /data/*.geojson (bundled at build)
+                (this repo: seeded by scripts/ from GADM until PostGIS exists)
+Basemap:        MapTiler (OSM raster fallback) ─▶ browser
 ```
 
-**Backend: live primary, static fallback.** In production the data "API" is GeoServer
-(WFS GeoJSON + WMTS tiles over PostGIS); the static mode serves bundled GeoJSON from the
-CDN. The MapLibre `source` abstraction means a layer reads a static `/data/*.geojson`
-file or a GeoServer endpoint with only a URL change, so the live backend can be stood up
-without touching app code. A production WebGIS needs server-side spatial queries, central
-styling, tiling, and live data (traffic); static wins on cost/ops for small, read-only
-data and offline demos. Full topology, diagrams, security, and deployment:
-[`docs/architecture.md`](docs/architecture.md) §6.
+The MapLibre `source` abstraction means a layer reads GeoServer or the bundled
+`/data/*.geojson` with only a URL change, so the live backend can be stood up without
+touching app code. Full topology, request flow, security, and deployment:
+[`docs/architecture.md`](docs/architecture.md) §2 and §6.
 
 ## Basemap
 
@@ -147,7 +149,7 @@ QA, analytics): ~3–4 weeks.
 - **Explore mode** after the story: free pan/zoom + layer toggles
 - Respects `prefers-reduced-motion` (instant camera instead of fly)
 - Trilingual-ready content model (currently Bahasa Indonesia)
-- Fully static, Vercel-ready; 60 unit tests
+- Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 70 unit tests
 
 ## Deploying to Vercel
 
@@ -173,13 +175,16 @@ because Jakarta is equatorial.
 [![Tech stack: 13 technologies grouped into Frontend, Production backend, Data, and Deploy & QA layers](docs/design/tech-stack.png)](docs/design/tech-stack.html)
 
 _Interactive version (layer filter, click a card for its role and rationale):
-[`docs/design/tech-stack.html`](docs/design/tech-stack.html)._
+[`docs/design/tech-stack.html`](docs/design/tech-stack.html). Full table with versions,
+status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 
-**Frontend:** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 · Scrollama 3 ·
-ngeohash · Vitest + Testing Library · Vercel.
-**Production backend (design):** PostGIS · GeoServer (WFS/WMTS + GeoWebCache) · QGIS
-(authoring) — see [`docs/architecture.md`](docs/architecture.md) §6.
-**Data tooling:** mapshaper / GADM.
+**Frontend (static, in repo):** Next.js 14 (static export) · TypeScript · MapLibre GL JS 4 ·
+Scrollama 3 · MapTiler · Vitest + Testing Library · Vercel.
+**Live data backend (designed, not stood up yet):** PostGIS · GeoServer (WFS/WMTS +
+GeoWebCache) · nginx gateway · Docker Compose — see [`docs/architecture.md`](docs/architecture.md) §6.
+**Authoring:** QGIS Desktop (edits PostGIS, publishes styles to GeoServer).
+**Data tooling:** GADM 4.1 · mapshaper · ngeohash (in repo) · GDAL `ogr2ogr` for the
+PostGIS → GeoJSON snapshot (live mode).
 
 ## Project structure
 

@@ -26,37 +26,46 @@ The Jakarta Pusat chapter additionally reveals a **congestion overlay**: geohash
 
 ---
 
-## 2. Architectural principle: live backend primary, static fallback
+## 2. Architectural principle: static frontend, live geospatial backend
 
-The production architecture is a **live open-source geospatial backend** — data authored in **QGIS**, stored in **PostGIS**, served to the web by **GeoServer** as standard OGC services — with the Next.js/MapLibre frontend as its consumer. A fully **static export** (bundled GeoJSON on a CDN) is retained as a deliberate **fallback / offline / demo** mode, and is what this repository actually ships today.
+The architecture splits **where the app comes from** from **where the data comes from**:
 
-Why a real backend is the primary target: a production WebGIS needs server-side spatial queries (bbox/attribute filtering), centrally managed cartography, tiling for large datasets, multi-source layer management, and **live data** (e.g. traffic congestion) — none of which static files provide at scale. The static fallback stays valuable for low-cost, read-only, slow-changing content and offline demos.
+- **Frontend — static.** The Next.js app is a static export (`output: 'export'`): prerendered HTML + JS on the Vercel edge CDN. No SSR, no serverless functions, no app server. This does not change when the backend goes live.
+- **Data — live.** The geodata lives in an open-source geospatial backend: authored in **QGIS**, stored in **PostGIS** (the single source of truth), and served by **GeoServer** as OGC services (**WFS** GeoJSON, **WMTS** tiles). The static app fetches it from the browser at runtime.
+- **Fallback — a snapshot of the live data.** At build time, CI exports a **GeoJSON snapshot from PostGIS** and bundles it into `/data/*.geojson`. The app uses it when GeoServer is unreachable, and for offline demos. Because the snapshot is exported *from* PostGIS, the fallback can never drift from the live data.
 
-The enabling decision that keeps both modes cheap: the frontend talks only to a MapLibre **`source` abstraction**, so pointing a layer at a GeoServer WFS/WMTS endpoint instead of a static `/data/*.geojson` file is a config change, not a rewrite. §6 specifies the live backend; §8 covers the static-delivery path this repo ships.
+Why live data matters even with a static frontend: a production WebGIS needs server-side spatial queries (bbox/attribute filtering), centrally managed cartography, tiling for large datasets, and **live data** (e.g. traffic congestion) — none of which files baked into a build provide. Why the frontend stays static anyway: the story UI is the same for every visitor, so serving it from a CDN keeps it cheap, fast, and resilient; only the data needs a server.
+
+The enabling decision: the frontend talks only to a MapLibre **`source` abstraction**, so a layer reading a GeoServer WFS/WMTS endpoint or the bundled `/data/*.geojson` snapshot is a URL change, not a rewrite.
+
+**What this repository ships today (POC):** the static frontend running in **snapshot-only** mode. Because the backend is not stood up yet, the snapshot is seeded by build scripts straight from GADM and sample data (§7.1) instead of being exported from PostGIS. §6 specifies the live backend; §10 is the path from POC to live.
 
 ---
 
-## 3. System context (static-delivery mode)
-
-This section shows the **static fallback** topology that this repo ships. The production topology — QGIS → PostGIS → GeoServer in the request path — is in §6.
+## 3. System context
 
 ```mermaid
 flowchart LR
     user([Visitor / browser])
-    app[Static SPA<br/>Next.js export]
-    cdn{{Vercel Edge CDN}}
-    basemap[(Basemap raster/vector tiles<br/>MapLibre demo / OSM / MapTiler)]
+    cdn{{Vercel Edge CDN<br/>static app + GeoJSON snapshot}}
+    gw{{API gateway<br/>TLS · CORS · cache}}
+    gs[GeoServer<br/>WFS · WMTS]
+    pg[(PostGIS)]
+    qgis[QGIS Desktop<br/>analysts]
+    basemap[(Basemap tiles<br/>MapTiler / OSM fallback)]
     gh[(GitHub repo)]
-    ga[Analytics<br/>optional]
 
-    user -->|HTTPS| cdn
-    cdn -->|HTML + JS + GeoJSON| app
-    app -->|XYZ tile requests| basemap
-    gh -->|git push → build| cdn
-    app -.->|page views| ga
+    user -->|HTML + JS| cdn
+    user -->|live data: WFS GeoJSON · WMTS tiles| gw
+    gw --> gs
+    gs -->|read-only| pg
+    qgis -->|edit + publish| pg
+    user -->|XYZ tiles| basemap
+    gh -->|git push → CI: snapshot export + next build| cdn
+    pg -.->|ogr2ogr snapshot at build| gh
 ```
 
-Everything the visitor touches is served from the Vercel CDN except basemap tiles, which come from a tile provider. There is no origin server in the request path.
+The visitor's browser makes three kinds of request: the **app** (HTML/JS, plus the fallback snapshot) from the Vercel CDN, **live data** from GeoServer behind the gateway, and **basemap tiles** from the tile provider. There is still no app server in the request path — GeoServer is a data service, not a renderer of pages. In the POC, only the CDN and basemap paths exist.
 
 ---
 
@@ -78,22 +87,23 @@ flowchart TB
         explore --> map
     end
 
-    subgraph config[Build-time config + data]
+    subgraph config[Build-time config]
         chapters[chapters.ts<br/>narrative model]
         views[mapViews.ts<br/>camera presets]
         layers[mapLayers.ts<br/>paint/filter helpers]
-        districts[(jakarta-districts.geojson)]
-        landmarks[(landmarks.geojson)]
-        congestion[(congestion.geojson<br/>geohash cells)]
         images[/images/*.jpg/]
+    end
+
+    subgraph data[Geodata — districts · landmarks · congestion]
+        live[(GeoServer WFS / WMTS<br/>live, from PostGIS)]
+        snap[(/data/*.geojson<br/>bundled snapshot)]
     end
 
     chapters --> story
     views --> story
     layers --> map
-    districts --> map
-    landmarks --> map
-    congestion --> map
+    live -->|primary| map
+    snap -.->|fallback| map
     images --> chapter
 ```
 
@@ -132,7 +142,7 @@ sequenceDiagram
     M->>M: setFilter (landmarks of active district)
 ```
 
-- **Rendering model:** Next.js static export (`output: 'export'`). Pages are prerendered HTML; the story runs client-side. No SSR/serverless at runtime.
+- **Rendering model:** Next.js static export (`output: 'export'`). Pages are prerendered HTML; the story runs client-side. No SSR/serverless at runtime — in live mode the browser fetches geodata from GeoServer itself (§6.4).
 - **Map as a sticky background:** the map container is `position: sticky; top: 0; height: 100vh`; narrative panels scroll over it. One persistent MapLibre instance — never re-created per chapter.
 - **State:** a single source of truth (`activeChapter` index in `StoryApp`). Derived values (district id, camera view) flow down as props. No global store needed at POC scale.
 - **Camera choreography:** each chapter maps to a named view preset (center + zoom), mirroring the reference's `views: {default, arctic, lancaster}`. The map animates between presets; it does not compute geometry centroids at runtime (avoids drift toward offshore polygons — see §9).
@@ -165,7 +175,7 @@ stateDiagram-v2
 
 ## 6. Backend architecture (PostGIS · GeoServer · QGIS)
 
-The brief asks to focus on "backend integration/APIs." The production backend is the open-source WebGIS stack: data authored in **QGIS**, stored in **PostGIS**, served as OGC web services by **GeoServer**, and consumed by the Next.js/MapLibre frontend over HTTP. QGIS is the authoring/analysis desktop tool (not in the request path); GeoServer is the serving layer.
+The brief asks to focus on "backend integration/APIs." The backend is the open-source WebGIS stack: data authored in **QGIS**, stored in **PostGIS**, served as OGC web services by **GeoServer**, and consumed over HTTP by the **static** Next.js/MapLibre frontend running in the browser. QGIS is the authoring/analysis desktop tool (not in the request path); GeoServer is the serving layer. The backend serves *data only* — the app itself always comes from the CDN.
 
 ### 6.1 Roles
 
@@ -174,7 +184,8 @@ The brief asks to focus on "backend integration/APIs." The production backend is
 | **QGIS Desktop** | Authoring & analysis | Ingest and clean source data, run spatial analysis, design cartography, and author styles (export **SLD/QML**). Connects directly to PostGIS over the DB connection and publishes layers/styles to GeoServer. The analyst's cockpit — used by people, not called by the app. |
 | **PostGIS** | Spatial source of truth | PostgreSQL + PostGIS. Tables for districts / landmarks / congestion, **GiST** spatial indexes, SRID-managed geometry, SQL views for derived layers, and the mutable tables that hold **live data** (e.g. current congestion speeds). |
 | **GeoServer** | OGC service layer | Publishes PostGIS layers as **WFS** (vector → GeoJSON), **WMS**, and **WMTS / vector tiles**; applies SLD styling; caches tiles via **GeoWebCache**. This is the real geospatial "API" the frontend hits. |
-| **Frontend (Next.js + MapLibre)** | Consumer | MapLibre `source`s point at GeoServer WFS/WMTS endpoints instead of static GeoJSON. Scrollytelling, highlight, and explore logic are unchanged. |
+| **Frontend (Next.js + MapLibre)** | Consumer (static) | Still a static export on the CDN. MapLibre `source`s point at GeoServer WFS/WMTS endpoints, with the bundled snapshot as fallback. Scrollytelling, highlight, and explore logic are unchanged. |
+| **Snapshot export (CI)** | Build-time bridge | `ogr2ogr` (GDAL) reads PostGIS and writes `public/data/*.geojson` before `next build`, so the fallback is always a copy of the live data. |
 
 > *Alternative:* **QGIS Server** can itself serve OGC services straight from a QGIS project. Here GeoServer is the serving layer and QGIS stays the authoring tool — a cleaner split of "author" vs "serve" for a team.
 
@@ -186,8 +197,10 @@ flowchart LR
     pg[(PostGIS<br/>spatial database)]
     gs[GeoServer<br/>WFS · WMS · WMTS<br/>+ GeoWebCache]
     gw{{API gateway / CDN<br/>reverse proxy · TLS · cache · CORS}}
-    app[Next.js + MapLibre<br/>browser]
+    app[Static Next.js + MapLibre<br/>in the browser]
     feed[(Traffic feed<br/>provider / open data)]
+    ci[CI: ogr2ogr snapshot<br/>→ next build]
+    cdn{{Vercel Edge CDN}}
 
     analyst -->|edit geometry + attributes| pg
     analyst -->|publish layers + styles| gs
@@ -195,6 +208,9 @@ flowchart LR
     feed -->|ETL upsert| pg
     app -->|WFS GeoJSON · WMTS tiles| gw
     gw --> gs
+    pg -->|read-only export| ci
+    ci -->|app + /data snapshot| cdn
+    cdn -->|HTML + JS| app
 ```
 
 ### 6.3 Request and update flow
@@ -220,6 +236,8 @@ sequenceDiagram
 - **Interactive vector layers** (districts, landmarks, congestion) → **WFS `GetFeature`** returning GeoJSON, loaded into the same MapLibre `geojson` sources. Moving from `/data/jakarta-districts.geojson` to `…/geoserver/wfs?...&outputFormat=application/json` is a URL swap.
 - **Basemap and heavy thematic layers** → **WMTS / vector tiles** from GeoServer + GeoWebCache (so large or frequently-drawn layers are pre-rendered, not re-queried per view).
 - The MapLibre `source` abstraction (already in `MapCanvas`) is what makes this swap a config change rather than a component rewrite.
+- **Endpoint selection is build-time config**, like the basemap key: a `NEXT_PUBLIC_GEOSERVER_URL` (planned) set → live layers; empty → snapshot only (today's POC). If a live request fails or times out, the layer loads the bundled snapshot instead, so the story never shows an empty map.
+- **Same-origin option:** a Vercel rewrite (`/geo/* → gateway`) lets the static app call GeoServer on its own origin, avoiding CORS configuration.
 
 ### 6.5 Gateway, security, caching, and deployment
 
@@ -228,19 +246,42 @@ sequenceDiagram
 - **Caching:** GeoWebCache for tiles + CDN edge caching; bounded/parameterized WFS requests to avoid unbounded scans.
 - **Deployment:** **Docker Compose** for `postgis`, `geoserver`, and the gateway (reproducible locally and on a VM); QGIS runs on each analyst's machine. Managed option: PostGIS on RDS / Cloud SQL, GeoServer on a container service or VM, tiles fronted by a CDN.
 
-### 6.6 Static fallback (what this repo ships)
+### 6.6 Snapshot fallback (and what this repo ships)
 
-The static export (bundled GeoJSON on a CDN, §8) is kept as an **offline / demo / low-cost** mode and is the POC in this repository. Because both modes feed the same MapLibre `source`s, the identical frontend runs against either the static files or the live GeoServer endpoints — the backend can be stood up without touching app code.
+The bundled GeoJSON is a **snapshot of PostGIS**, not a separate dataset. In CI, before `next build`:
+
+```bash
+ogr2ogr -f GeoJSON public/data/jakarta-districts.geojson \
+  PG:"$POSTGIS_READONLY_URL" -sql "SELECT id, name, geom FROM districts" \
+  -lco COORDINATE_PRECISION=5
+```
+
+(and likewise for landmarks and congestion; GeoServer's WFS `outputFormat=application/json` works too.) The snapshot serves three purposes: **fallback** when GeoServer is unreachable, **offline demos**, and **fast first paint** for slow-changing layers such as boundaries.
+
+**This repo today** runs the frontend in snapshot-only mode, with the snapshot seeded by `scripts/build-*.mjs` from GADM and sample data because PostGIS does not exist yet. When the backend is stood up, those scripts become one-off **seed loaders into PostGIS**, and the snapshot switches to the `ogr2ogr` export above — no app code changes.
 
 ### 6.7 Trade-offs (honest)
 
-A live backend buys server-side spatial queries, centrally managed styling, tiling, multi-source management, and live data — at the cost of **infrastructure to run, scale, secure, back up, and pay for** (database, GeoServer, gateway). Static delivery wins on cost, ops simplicity, and resilience for small, read-only, slow-changing data. The pragmatic answer is **per dataset**: boundaries rarely change → tile and cache aggressively; congestion is live → PostGIS + WFS.
+A live backend buys server-side spatial queries, centrally managed styling, tiling, multi-source management, and live data — at the cost of **infrastructure to run, scale, secure, back up, and pay for** (database, GeoServer, gateway). Keeping the frontend static limits that cost to the data tier: the app shell never needs a server, and a backend outage degrades to the snapshot instead of a blank page. The pragmatic answer is **per dataset**: boundaries rarely change → the snapshot (or cached WMTS) is enough; congestion is live → PostGIS + WFS.
 
 ---
 
 ## 7. Data architecture
 
 ### 7.1 Sourcing and pipeline
+
+**Live target:** every source lands in PostGIS first; the bundled GeoJSON is exported from it.
+
+```mermaid
+flowchart LR
+    gadm[(GADM 4.1 / geoBoundaries)] -->|seed: ogr2ogr| pg[(PostGIS)]
+    hand[landmarks] -->|QGIS edit| pg
+    feed[(traffic feed)] -->|ETL upsert| pg
+    pg --> gs[GeoServer<br/>WFS · WMTS] --> app[static app, live]
+    pg -->|ogr2ogr at build| snap[(public/data/*.geojson<br/>snapshot)] --> app2[static app, fallback]
+```
+
+**POC today:** PostGIS is not stood up yet, so build scripts produce the snapshot directly.
 
 ```mermaid
 flowchart LR
@@ -295,14 +336,24 @@ flowchart LR
 ```mermaid
 flowchart LR
     dev[Local dev] -->|git push| gh[(GitHub<br/>feature branch → main)]
-    gh -->|Vercel Git integration| build[Vercel build<br/>next build → out/]
+    gh -->|Vercel Git integration| build[Vercel build<br/>snapshot export → next build → out/]
+    pg[(PostGIS<br/>read-only role)] -.->|ogr2ogr, live mode| build
     build --> edge{{Vercel Edge CDN}}
     edge --> user([Visitors])
     gh -.->|invite| cat[catalyzecomms]
+
+    subgraph backend[Backend host — Docker Compose]
+        pg
+        gs[GeoServer + GeoWebCache]
+        gw{{nginx gateway}}
+    end
+    user -->|live data| gw --> gs --> pg
 ```
 
-- **CI/CD:** GitHub → Vercel Git integration. Every push builds `next build` (static export to `out/`) and deploys; PRs get preview URLs.
-- **Hosting:** static assets on Vercel's edge CDN. No serverless functions at POC (would be added only for Tier-1 feature APIs).
+The frontend and backend deploy independently: the **frontend** ships through Vercel exactly as before; the **backend** runs as a Docker Compose stack (or managed PostGIS + a GeoServer container) on its own host.
+
+- **CI/CD (frontend):** GitHub → Vercel Git integration. Every push runs the snapshot export (live mode only, using a read-only PostGIS role), then `next build` (static export to `out/`), and deploys; PRs get preview URLs. In the POC the snapshot step is skipped and the committed GeoJSON is used.
+- **Hosting:** static assets on Vercel's edge CDN. No serverless functions — the live data API is GeoServer, not a Vercel function.
 - **Caching:** hashed immutable JS/CSS assets; GeoJSON served with cache headers. Basemap tiles cached by the provider + browser.
 - **Submission:** repo on GitHub (invite `catalyzecomms`), live URL on Vercel, both emailed by 8 Nov 2026.
 
@@ -316,11 +367,11 @@ flowchart LR
 | **Accessibility — content** | Each chapter image has meaningful `alt`; narrative is real DOM text (screen-reader + SEO friendly), not baked into images (an improvement over the reference's PNG-text scenes) |
 | **Mobile** | Sticky map stays visible; panels readable at ≤480px; touch scroll drives Scrollama; hover has no touch equivalent, so no data is hover-only (explore toggles + scripted highlight cover it) |
 | **Performance** | One map instance; simplified geometry; data-driven paint over layer churn; small GeoJSON; lazy image loading |
-| **Resilience** | GeoJSON fetch wrapped in try/catch — basemap still renders on failure, no crash |
+| **Resilience** | Live → snapshot: a failed or slow GeoServer request falls back to the bundled GeoJSON; if that fails too, the basemap still renders, no crash |
 | **Rapid scroll** | `MapCanvas` keeps a latest-view ref so only the most recent chapter's camera move applies (no `flyTo` queue lag) |
 | **SEO** | Static prerendered HTML with real narrative text + metadata |
 | **Analytics** | Optional privacy-friendly beacon (Plausible) or GA4 |
-| **Security** | No secrets in client beyond a domain-restricted tile key; static hosting shrinks attack surface |
+| **Security** | No secrets in client beyond a domain-restricted tile key; static hosting shrinks attack surface. GeoServer admin stays private behind the gateway; GeoServer and CI read PostGIS with read-only roles |
 
 ---
 
@@ -328,13 +379,13 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    poc[Static POC<br/>bundled GeoJSON] --> v1[PostGIS + GeoServer<br/>live WFS / WMTS layers]
+    poc[Static frontend<br/>seeded snapshot] --> v1[Static frontend<br/>+ live PostGIS / GeoServer]
     v1 --> v2[GeoWebCache + gateway<br/>CMS chapters · EN/ID]
     v2 --> v3[Live traffic feed<br/>user-selectable datasets]
 ```
 
-1. **POC (this build):** static data, scripted narrative, five districts, hover-highlight, static Sudirman congestion overlay, explore mode.
-2. **v1 — stand up the backend (§6):** load the geodata into **PostGIS**, publish it through **GeoServer** (WFS + WMTS), author styles in **QGIS**, and point the MapLibre sources at GeoServer. The static export becomes the fallback.
+1. **POC (this build):** static frontend in snapshot-only mode — scripted narrative, five districts, hover-highlight, static Sudirman congestion overlay, explore mode.
+2. **v1 — stand up the backend (§6):** seed **PostGIS** with the existing scripts' sources, author and style in **QGIS**, publish through **GeoServer** (WFS + WMTS), set `NEXT_PUBLIC_GEOSERVER_URL`, and switch CI to export the snapshot from PostGIS. The frontend stays a static export; only where it reads data changes.
 3. **v2:** GeoWebCache + API gateway tuning; narrative + images managed in a headless CMS with a deploy hook; EN/ID language toggle; richer explore-mode layer catalog.
 4. **v3:** **live traffic feed** replacing the static congestion sample (ETL into PostGIS, GeoServer serves fresh cells recolored by real-time speed); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
 
@@ -345,15 +396,16 @@ flowchart LR
 | Decision | Chosen | Alternatives considered | Rationale |
 |----------|--------|-------------------------|-----------|
 | Map engine | MapLibre GL | Mapbox GL (token/cost), Leaflet (raster, like reference), ArcGIS JS (heavy/licensed) | Open, free, vector, smooth camera; no vendor lock-in |
-| Backend | Live **PostGIS + GeoServer** (static fallback) | Pure static; serverless feature API; ArcGIS/managed | Open-source OGC stack: server-side spatial queries, central styling, tiling, live data; static kept for offline/demo (§6) |
+| Backend | Live **PostGIS + GeoServer** behind a static frontend (snapshot fallback) | Pure static; serverless feature API; ArcGIS/managed | Open-source OGC stack: server-side spatial queries, central styling, tiling, live data; the app stays static, and the fallback is exported from PostGIS so it cannot drift (§6) |
 | Spatial DB | **PostGIS** | SpatiaLite, Mongo/Elastic geo | De-facto OSS spatial DB; GiST indexes, rich SQL analysis; first-class in both QGIS and GeoServer |
 | OGC server | **GeoServer** | QGIS Server, pg_tileserv/Martin, MapServer | Mature WFS/WMS/WMTS + GeoWebCache + SLD, broad formats; QGIS Server noted as the alternative (§6.1) |
 | Authoring | **QGIS Desktop** | ArcGIS Pro, FME, hand-coded ETL | Free, strong cartography/analysis, native PostGIS editing + GeoServer publishing |
-| Data format | GeoJSON (static mode) / WFS+WMTS (live) | TopoJSON, Shapefile, PMTiles | GeoJSON simplest for the static POC; GeoServer serves WFS GeoJSON + WMTS tiles in production |
+| Data format | WFS GeoJSON + WMTS (live) / GeoJSON snapshot (fallback) | TopoJSON, Shapefile, PMTiles | Same GeoJSON shape in both paths, so MapLibre sources are interchangeable; WMTS for heavy layers |
+| Fallback source | **`ogr2ogr` snapshot from PostGIS** at build | Separate static pipeline; no fallback | One source of truth — the fallback is a copy of the live data, not a second dataset |
 | Boundary source | **GADM 4.1** (ADM2) | geoBoundaries (CC BY), BPS, Jakarta Satu, OSM | User choice; complete IDN ADM2. Caveat: GADM restricts redistribution/commercial use (§7.1) — swap to geoBoundaries for a public/commercial build |
 | Congestion encoding | **Geohash cells** (precision 7) | GPS polyline, H3 hexagons, segment IDs | Compact, grid-aligned, trivially colorable; cells map cleanly to a GL fill layer; ngeohash is tiny |
 | Projection | Web Mercator | Custom polar stereographic (reference) | Equatorial location makes custom CRS unnecessary complexity |
-| Framework | Next.js static export | Plain Vite/React, Astro | Brief mandates Vercel; static export keeps it serverless; easy Tier-1 serverless later |
+| Framework | Next.js static export — also in live mode | Plain Vite/React, Astro; SSR Next.js | Brief mandates Vercel; the story UI is identical for every visitor, so it stays static even when data goes live — only the data tier needs servers |
 | Narrative | Config-driven data | Hardcoded in components | Editable without code changes; the reference's strongest pattern |
 
 ---
@@ -362,7 +414,7 @@ flowchart LR
 
 **`lancastersound.wwf.ca` (reverse-engineered):** a ~2016 RequireJS SPA using **Leaflet 0.7.7 + Proj4Leaflet** on a custom Arctic projection (EPSG:5937), a **Mapbox classic raster** basemap, and **static TopoJSON/GeoJSON** data (with an optional ArcGIS REST path). Three modes — scripted *story*, *gallery* of clustered media, free-explore *layers* — all driven by declarative JSON config. Narrative scenes are largely pre-rendered PNGs.
 
-**This project keeps** the config-driven narrative model, named camera views, a static-delivery fallback mode, and the story→explore arc (and adds a live PostGIS + GeoServer backend as the production target, §6). **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
+**This project keeps** the config-driven narrative model, named camera views, static delivery of the app, and the story→explore arc (and adds a live PostGIS + GeoServer data backend behind it, §6). **It modernizes** the stack (MapLibre + Next.js + Scrollama over RequireJS + Leaflet), uses **real DOM text** for narrative (accessibility/SEO) instead of PNG scenes, and **drops the custom projection** because Jakarta is equatorial — demonstrating judgement about where complexity is and isn't warranted.
 
 ---
 
