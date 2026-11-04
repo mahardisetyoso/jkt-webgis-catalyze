@@ -15,12 +15,12 @@ const ENDPOINTS = [
 ];
 
 const [S, W, N, E] = BBOX;
-const QUERY = `[out:json][timeout:120];(
-  way["building"]["building:levels"](${S},${W},${N},${E});
-  way["building"]["height"](${S},${W},${N},${E});
+// All building footprints in the bbox (not only tagged ones), so coverage is even.
+const QUERY = `[out:json][timeout:180];(
+  way["building"](${S},${W},${N},${E});
 );out geom;`;
 
-const round = (n) => Math.round(n * 1e6) / 1e6;
+const round = (n) => Math.round(n * 1e5) / 1e5; // ~1 m
 
 function heightOf(tags = {}) {
   if (tags.height) {
@@ -31,7 +31,7 @@ function heightOf(tags = {}) {
     const l = parseFloat(tags["building:levels"]);
     if (l > 0) return Math.round(l * 3.3 * 10) / 10;
   }
-  return 12;
+  return 10; // untagged low-rise default (metres)
 }
 
 async function fetchOverpass() {

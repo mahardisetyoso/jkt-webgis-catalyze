@@ -113,9 +113,10 @@ time). In MapTiler Cloud, restrict the key to your Vercel domain(s).
     public or commercial build, swap in [geoBoundaries](https://www.geoboundaries.org)
     (CC BY) or BPS / Jakarta Satu data — a one-file change in the build script.
 - **Landmarks:** hand-authored `public/data/landmarks.geojson` (points per district).
-- **3D buildings:** `scripts/build-buildings.mjs` pulls OSM building footprints with a
-  height/levels tag in the Sudirman–SCBD bbox (Overpass API, © OpenStreetMap ODbL) into
-  `public/data/buildings.geojson`, rendered as a MapLibre `fill-extrusion` layer.
+- **3D buildings:** `scripts/build-buildings.mjs` pulls OSM building footprints in the
+  Sudirman–SCBD bbox (Overpass API, © OpenStreetMap ODbL) — real height where tagged,
+  a default otherwise, for even coverage — into `public/data/buildings.geojson`,
+  rendered as a MapLibre `fill-extrusion` layer.
 - **CRS:** WGS84 (EPSG:4326) in storage, Web Mercator at render time. Jakarta is
   equatorial, so the Arctic polar-stereographic projection the reference site needed
   (EPSG:5937) is deliberately **not** used here.
