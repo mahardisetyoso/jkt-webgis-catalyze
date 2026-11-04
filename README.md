@@ -6,7 +6,7 @@ into a photo gallery and a freely explorable map. Built for the Catalyze "WebGIS
 study — a modern reconstruction of the digital-storytelling approach seen on
 [lancastersound.wwf.ca](https://lancastersound.wwf.ca).
 
-- **Live demo:** _<add Vercel URL after deploy>_
+- **Live demo:** https://jkt-webgis-catalyze.vercel.app/
 - **Full design doc:** [`docs/architecture.md`](docs/architecture.md) — end-to-end architecture, with diagrams.
 
 The five chapters:
