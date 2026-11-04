@@ -28,7 +28,6 @@ vi.mock("../components/MapCanvas", () => ({
       data-testid="map"
       data-active={String(props.activeDistrictId)}
       data-mode={props.mode}
-      data-congestion={String(props.showCongestion)}
     />
   ),
 }));
@@ -52,12 +51,6 @@ describe("StoryApp", () => {
     render(<StoryApp />);
     act(() => enterCb!({ index: idx("jaksel") }));
     expect(screen.getByTestId("map").getAttribute("data-active")).toBe("jaksel");
-  });
-
-  it("turns congestion on for the Jakarta Pusat chapter", () => {
-    render(<StoryApp />);
-    act(() => enterCb!({ index: idx("jakpus") }));
-    expect(screen.getByTestId("map").getAttribute("data-congestion")).toBe("true");
   });
 
   it("enters explore mode from the nav and shows the explore panel", () => {

@@ -6,8 +6,6 @@ import { basemapFromProcessEnv } from "@/lib/basemap";
 import {
   districtFillPaint,
   landmarkFilter,
-  congestionPaint,
-  congestionPulseOpacity,
   cameraMove,
   cameraPadding,
   districtColorExpr,
@@ -21,7 +19,6 @@ type Props = {
   activeDistrictId: string | null;
   view: MapView;
   mode: Mode;
-  showCongestion: boolean;
   showAllLandmarks: boolean;
   reducedMotion: boolean;
 };
@@ -58,7 +55,6 @@ export default function MapCanvas({
   activeDistrictId,
   view,
   mode,
-  showCongestion,
   showAllLandmarks,
   reducedMotion,
 }: Props) {
@@ -67,12 +63,10 @@ export default function MapCanvas({
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const readyRef = useRef(false);
   const hoverRef = useRef<string | null>(null);
-  const rafRef = useRef<number | null>(null);
   const propsRef = useRef<Props>({
     activeDistrictId,
     view,
     mode,
-    showCongestion,
     showAllLandmarks,
     reducedMotion,
   });
@@ -80,7 +74,6 @@ export default function MapCanvas({
     activeDistrictId,
     view,
     mode,
-    showCongestion,
     showAllLandmarks,
     reducedMotion,
   };
@@ -147,10 +140,6 @@ export default function MapCanvas({
         type: "geojson",
         data: "/data/landmarks.geojson",
       });
-      map.addSource("congestion", {
-        type: "geojson",
-        data: "/data/congestion.geojson",
-      });
 
       // On a vector basemap, slot the story polygons beneath its first label layer
       // so street/place names stay readable; landmarks still go on top.
@@ -190,15 +179,6 @@ export default function MapCanvas({
         paint: { "line-color": "#ffffff", "line-width": 2.6 },
       }, beforeLabels);
       map.addLayer({
-        id: "congestion",
-        type: "fill",
-        source: "congestion",
-        layout: {
-          visibility: propsRef.current.showCongestion ? "visible" : "none",
-        },
-        paint: congestionPaint(),
-      }, beforeLabels);
-      map.addLayer({
         id: "landmarks",
         type: "circle",
         source: "landmarks",
@@ -232,22 +212,6 @@ export default function MapCanvas({
       });
 
       readyRef.current = true;
-      // Breathing congestion cells; skipped under reduced motion.
-      const pulse = () => {
-        if (!mapRef.current) return;
-        if (
-          !propsRef.current.reducedMotion &&
-          map.getLayoutProperty("congestion", "visibility") === "visible"
-        ) {
-          map.setPaintProperty(
-            "congestion",
-            "fill-opacity",
-            congestionPulseOpacity(performance.now() / 1000),
-          );
-        }
-        rafRef.current = requestAnimationFrame(pulse);
-      };
-      rafRef.current = requestAnimationFrame(pulse);
       paintDistricts();
       moveCamera();
       map.setFilter(
@@ -261,7 +225,6 @@ export default function MapCanvas({
     });
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       map.remove();
       mapRef.current = null;
       readyRef.current = false;
@@ -282,17 +245,6 @@ export default function MapCanvas({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDistrictId, view, mode, reducedMotion, showAllLandmarks]);
-
-  // Congestion overlay toggle.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !readyRef.current) return;
-    map.setLayoutProperty(
-      "congestion",
-      "visibility",
-      showCongestion ? "visible" : "none",
-    );
-  }, [showCongestion]);
 
   // Enable free interaction only in explore mode.
   useEffect(() => {

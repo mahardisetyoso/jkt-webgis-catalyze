@@ -2,12 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   districtFillPaint,
   landmarkFilter,
-  congestionPaint,
   cameraMove,
   mapInteractive,
   districtColorExpr,
   districtIdFilter,
-  congestionPulseOpacity,
   cameraPadding,
 } from "../lib/mapLayers";
 import { districtColors } from "../lib/chapters";
@@ -65,12 +63,6 @@ describe("landmarkFilter", () => {
   });
 });
 
-describe("congestionPaint", () => {
-  it("is a red fill", () => {
-    expect(congestionPaint()["fill-color"]).toBe("#e53935");
-  });
-});
-
 describe("cameraMove", () => {
   it("jumps when reduced motion, flies otherwise", () => {
     expect(cameraMove(true)).toBe("jumpTo");
@@ -100,16 +92,6 @@ describe("districtIdFilter", () => {
     expect(evalExpr(districtIdFilter("jakut"), { id: "jakut" })).toBe(true);
     expect(evalExpr(districtIdFilter("jakut"), { id: "jaksel" })).toBe(false);
     expect(evalExpr(districtIdFilter(null), { id: "jakut" })).toBe(false);
-  });
-});
-
-describe("congestionPulseOpacity", () => {
-  it("stays within a visible range", () => {
-    for (let t = 0; t < 10; t += 0.13) {
-      const o = congestionPulseOpacity(t);
-      expect(o).toBeGreaterThanOrEqual(0.2);
-      expect(o).toBeLessThanOrEqual(0.7);
-    }
   });
 });
 

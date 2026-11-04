@@ -13,7 +13,7 @@ The five chapters:
 
 | District | Theme | Highlights |
 |----------|-------|-----------|
-| Jakarta Pusat | Business center (+ Sudirman congestion overlay) | Sudirman, SCBD |
+| Jakarta Pusat | Business center | Sudirman, SCBD |
 | Jakarta Barat | Education & culinary | Trisakti, Untar, Ciputra, Tanjung Duren |
 | Jakarta Selatan | Pop culture & entertainment | Blok M, Kemang |
 | Jakarta Utara | Trade & Chinatown | PIK, Glodok |
@@ -25,7 +25,6 @@ The five chapters:
 npm install
 cp .env.example .env.local   # then paste your MapTiler key (optional, see "Basemap")
 npm run data:districts    # build district boundaries from GADM (downloads once, cached)
-npm run data:congestion   # build Sudirman congestion geohash cells
 npm run dev               # http://localhost:3000
 ```
 
@@ -60,9 +59,8 @@ up yet, so the snapshot is seeded by build scripts from GADM and sample data.
 The app behaves identically in both modes: a single full-viewport MapLibre map
 sits sticky behind scrolling narrative panels; **Scrollama** fires a chapter change as
 each panel enters view, flying the camera to that district, highlighting its boundary
-(dimming the others), revealing its landmarks, and — for Jakarta Pusat — showing the
-Sudirman congestion overlay. After the last chapter an **explore mode** unlocks free
-pan/zoom with layer toggles. A persistent **three-mode nav** (Cerita · Galeri · Jelajahi)
+(dimming the others), and revealing its landmarks. After the last chapter an **explore
+mode** unlocks free pan/zoom with layer toggles. A persistent **three-mode nav** (Cerita · Galeri · Jelajahi)
 also opens a **photo gallery** (grid + lightbox) and the explore map at any time.
 
 The narrative is **data, not code**: `lib/chapters.ts` + `lib/mapViews.ts` declare
@@ -115,10 +113,6 @@ time). In MapTiler Cloud, restrict the key to your Vercel domain(s).
     public or commercial build, swap in [geoBoundaries](https://www.geoboundaries.org)
     (CC BY) or BPS / Jakarta Satu data — a one-file change in the build script.
 - **Landmarks:** hand-authored `public/data/landmarks.geojson` (points per district).
-- **Sudirman congestion:** `scripts/build-congestion.mjs` samples the Jalan Sudirman
-  centerline, encodes each sample to a **geohash** (precision 7, ~150 m) with
-  `ngeohash`, and emits one red (`status: "macet"`) cell polygon each. Static sample
-  data; a live traffic feed would recolor these by real-time speed.
 - **CRS:** WGS84 (EPSG:4326) in storage, Web Mercator at render time. Jakarta is
   equatorial, so the Arctic polar-stereographic projection the reference site needed
   (EPSG:5937) is deliberately **not** used here.
@@ -130,14 +124,14 @@ in [`docs/architecture.md`](docs/architecture.md) §13):
 
 | Day | Focus |
 |-----|-------|
-| Tue 3 Nov | Scaffold + data pipeline (GADM, landmarks, congestion) |
+| Tue 3 Nov | Scaffold + data pipeline (GADM, landmarks) |
 | Wed 4 Nov | Chapter/camera model + MapCanvas (map, highlight, camera) |
-| Thu 5 Nov | Hover + congestion + Scroller/Chapter UI |
+| Thu 5 Nov | Hover-highlight + Scroller/Chapter UI |
 | Fri 6 Nov | Explore mode + assembly + styling |
 | Sat 7 Nov | Images + README + first Vercel deploy |
 | Sun 8 Nov | QA (mobile, reduced-motion, data-failure) + submit |
 
-Production build-out (real data pipeline + CMS, live traffic feed, multi-language,
+Production build-out (real data pipeline + CMS, live data layers, multi-language,
 QA, analytics): ~3–4 weeks.
 
 ## Features
@@ -148,13 +142,12 @@ QA, analytics): ~3–4 weeks.
 - Chapter-dot navigator, per-district accent colours, glowing active boundary
 - Active-district highlight (others dimmed) + **hover-to-highlight** with name tooltip
 - Landmark markers per district, coloured by district
-- **Sudirman traffic-congestion overlay** (geohash cells, red = *macet*, pulsing)
 - **Explore mode** after the story: free pan/zoom + layer toggles
 - **Gallery mode**: grid of all district photos with a lightbox (prev/next/close, keyboard)
 - Persistent **three-mode nav** (Cerita · Galeri · Jelajahi) to switch modes anytime
 - Respects `prefers-reduced-motion` (instant camera instead of fly)
 - Trilingual-ready content model (currently Bahasa Indonesia)
-- Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 70 unit tests
+- Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 63 unit tests
 
 ## Deploying to Vercel
 
@@ -198,15 +191,15 @@ status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 
 - **Next.js 14** (App Router, static export) — builds the whole app to static HTML/JS; no server runtime.
 - **TypeScript** — types the chapter/camera/geo config so bad ids or coordinates fail at build.
-- **MapLibre GL JS 4** — the interactive WebGL map: camera moves, district highlight, hover tooltip, landmarks, congestion layer.
+- **MapLibre GL JS 4** — the interactive WebGL map: camera moves, district highlight, hover tooltip, landmarks.
 - **Scrollama 3** — fires a chapter change as each narrative panel scrolls into view.
 - **MapTiler** — vector basemap (domain-restricted key); darkened OSM raster as the keyless dev fallback.
-- **Vitest + Testing Library** — unit tests (70) for the chapter/camera model, paint helpers, and components.
+- **Vitest + Testing Library** — unit tests (63) for the chapter/camera model, paint helpers, and components.
 - **Vercel** — hosts the static build on its edge CDN; Git-integrated deploys with PR previews.
 
 **Live data backend (designed; not stood up yet — architecture §6)**
 
-- **PostGIS** (PostgreSQL) — spatial database; single source of truth for districts, landmarks, and congestion.
+- **PostGIS** (PostgreSQL) — spatial database; single source of truth for districts and landmarks.
 - **GeoServer** — serves PostGIS layers as OGC services (**WFS** GeoJSON, **WMTS** tiles) with SLD styling — the data API the browser calls.
 - **GeoWebCache** — tile cache inside GeoServer; pre-renders heavy / slow-changing layers.
 - **nginx gateway** — TLS, rate-limiting, response cache; keeps GeoServer admin private, reached only via the Vercel `/geo/*` rewrite.
@@ -220,7 +213,6 @@ status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 
 - **GADM 4.1** — source for the five kota boundaries.
 - **mapshaper** — simplifies boundary geometry (~13 KB output).
-- **ngeohash** — encodes the Sudirman centerline into precision-7 geohash congestion cells.
 - **GDAL `ogr2ogr`** — exports the GeoJSON snapshot from PostGIS at build time (live mode).
 
 ## Project structure
@@ -230,8 +222,8 @@ app/            Next.js App Router (layout, page, global CSS)
 components/      MapCanvas, Scroller, Chapter, ChapterDots, StoryApp,
                  ModeNav, ExplorePanel, GalleryGrid, Lightbox
 lib/            chapters, mapViews, mapLayers, basemap, useScrollChapter
-scripts/        build-districts / build-congestion / build-images
-public/data/     districts, landmarks, congestion GeoJSON
+scripts/        build-districts / build-images
+public/data/     districts, landmarks GeoJSON
 public/images/   district photos in photos/ (+ CREDITS.md)
 tests/           Vitest suites
 docs/            architecture.md + implementation plan

@@ -71,7 +71,6 @@ import MapCanvas from "../components/MapCanvas";
 
 const base = {
   mode: "story" as const,
-  showCongestion: false,
   showAllLandmarks: false,
   reducedMotion: false,
 };

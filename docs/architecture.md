@@ -9,8 +9,8 @@
 
 A web application that walks a visitor through the **five municipalities (kota administrasi) of DKI Jakarta** as a scripted, scroll-driven narrative, ending in an interactive map. It is the Catalyze "WebGIS Development" case study — a modern reconstruction of the storytelling approach seen on [`lancastersound.wwf.ca`](https://lancastersound.wwf.ca), applied to Jakarta.
 
-**In scope (POC):** the scrollytelling experience, five district narratives + landmark highlights, boundary + point geodata, a **hover-to-highlight** interaction on district polygons, a **traffic-congestion layer** (geohash cells along Jalan Sudirman, red = *macet*), a **gallery mode** (grid of district photos with a lightbox), a free **explore mode** after the story, a persistent **three-mode nav** (Cerita · Galeri · Jelajahi), and Vercel deployment.
-**Out of scope (POC):** CMS, authentication, write APIs, live/real-time traffic feeds (congestion is static sample data), multi-language UI (noted as an evolution step).
+**In scope (POC):** the scrollytelling experience, five district narratives + landmark highlights, boundary + point geodata, a **hover-to-highlight** interaction on district polygons, a **gallery mode** (grid of district photos with a lightbox), a free **explore mode** after the story, a persistent **three-mode nav** (Cerita · Galeri · Jelajahi), and Vercel deployment.
+**Out of scope (POC):** CMS, authentication, write APIs, live/real-time data feeds, multi-language UI (noted as an evolution step).
 
 The narrative (simple, Bahasa Indonesia):
 
@@ -22,8 +22,6 @@ The narrative (simple, Bahasa Indonesia):
 | 4 | Jakarta Utara | Trade & Chinatown | PIK, Glodok |
 | 5 | Jakarta Timur | Manufacturing industry | Pulogadung |
 
-The Jakarta Pusat chapter additionally reveals a **congestion overlay**: geohash cells tracing the Sudirman corridor, styled red to signal *macet* (heavy traffic). It is static sample data in the POC; the live-traffic version is part of the production backend in §6.
-
 ---
 
 ## 2. Architectural principle: static frontend, live geospatial backend
@@ -34,7 +32,7 @@ The architecture splits **where the app comes from** from **where the data comes
 - **Data — live.** The geodata lives in an open-source geospatial backend: authored in **QGIS**, stored in **PostGIS** (the single source of truth), and served by **GeoServer** as OGC services (**WFS** GeoJSON, **WMTS** tiles). The static app fetches it from the browser at runtime.
 - **Fallback — a snapshot of the live data.** At build time, CI exports a **GeoJSON snapshot from PostGIS** and bundles it into `/data/*.geojson`. The app uses it when GeoServer is unreachable, and for offline demos. Because the snapshot is exported *from* PostGIS, the fallback can never drift from the live data.
 
-Why live data matters even with a static frontend: a production WebGIS needs server-side spatial queries (bbox/attribute filtering), centrally managed cartography, tiling for large datasets, and **live data** (e.g. traffic congestion) — none of which files baked into a build provide. Why the frontend stays static anyway: the story UI is the same for every visitor, so serving it from a CDN keeps it cheap, fast, and resilient; only the data needs a server.
+Why live data matters even with a static frontend: a production WebGIS needs server-side spatial queries (bbox/attribute filtering), centrally managed cartography, tiling for large datasets, and **live data** — none of which files baked into a build provide. Why the frontend stays static anyway: the story UI is the same for every visitor, so serving it from a CDN keeps it cheap, fast, and resilient; only the data needs a server.
 
 The enabling decision: the frontend talks only to a MapLibre **`source` abstraction**, so a layer reading a GeoServer WFS/WMTS endpoint or the bundled `/data/*.geojson` snapshot is a URL change, not a rewrite.
 
@@ -103,7 +101,7 @@ flowchart TB
         images[/images/photos/*.jpg/]
     end
 
-    subgraph data[Geodata — districts · landmarks · congestion]
+    subgraph data[Geodata — districts · landmarks]
         live[(GeoServer WFS / WMTS<br/>live, from PostGIS)]
         snap[(/data/*.geojson<br/>bundled snapshot)]
     end
@@ -122,16 +120,16 @@ flowchart TB
 
 | Component | Responsibility | Key interface |
 |-----------|----------------|---------------|
-| `StoryApp` | Hold `activeChapter` + `view` (`story`/`gallery`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map, own the gallery lightbox index | `activeDistrictId`, `view`, `mode`, `showCongestion`, `showAllLandmarks` → `MapCanvas` |
+| `StoryApp` | Hold `activeChapter` + `view` (`story`/`gallery`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map, own the gallery lightbox index | `activeDistrictId`, `view`, `mode`, `showAllLandmarks` → `MapCanvas` |
 | `ModeNav` | Persistent header nav switching the three modes | `{view, onChange}` |
 | `Scroller` | Fire `onChapter(index)` as panels enter viewport (Scrollama) | `{chapters, onChapter, active}` |
 | `Chapter` | Render one narrative panel (kicker/theme, title, subtitle, body, one or two photos) | `{chapter, index, active}` |
 | `ChapterDots` | Progress-dot navigator down the side; jump to a chapter | `{chapters, active, onSelect}` |
-| `MapCanvas` | Own the MapLibre map; highlight active district, hover-highlight, fly camera, show landmarks + congestion; enable interaction in explore mode | `{activeDistrictId, view, mode, showCongestion, showAllLandmarks, reducedMotion}` |
+| `MapCanvas` | Own the MapLibre map; highlight active district, hover-highlight, fly camera, show landmarks; enable interaction in explore mode | `{activeDistrictId, view, mode, showAllLandmarks, reducedMotion}` |
 | `ExplorePanel` | Render layer toggles shown in explore mode | `{layers, onToggle}` |
 | `GalleryGrid` | Photo grid of all chapter photos (tile = thumbnail + caption + district accent) | `{items, onOpen}` |
 | `Lightbox` | Enlarged photo overlay with prev/next/close + keyboard | `{items, index, onClose, onIndex}` |
-| `lib/mapLayers.ts` | Pure styling/geometry helpers (testable without WebGL) | `districtFillPaint`, `districtColorExpr`, `landmarkFilter`, `districtIdFilter`, `congestionPaint`, `congestionPulseOpacity`, `cameraMove`, `cameraPadding`, `mapInteractive` |
+| `lib/mapLayers.ts` | Pure styling/geometry helpers (testable without WebGL) | `districtFillPaint`, `districtColorExpr`, `landmarkFilter`, `districtIdFilter`, `cameraMove`, `cameraPadding`, `mapInteractive` |
 | `lib/basemap.ts` | Pick MapTiler vector (keyed) or OSM raster basemap | reads `NEXT_PUBLIC_MAPTILER_*` |
 
 ---
@@ -177,7 +175,7 @@ sequenceDiagram
 - **Hover-to-highlight (district polygons):** on `mousemove` over the district fill layer, MapLibre `setFeatureState({hover:true})` thickens that polygon's outline and lifts its fill opacity; a lightweight tooltip follows the cursor showing the district `name`. `mouseleave` clears the state. This uses feature-state, not a layer rebuild, so it is cheap and does not fight the active-chapter highlight. Hover is a pointer affordance; keyboard/touch users rely on the scripted highlight and the explore toggles, so no information is hover-only.
 - **Three-mode nav:** a persistent `ModeNav` in the header (Cerita · Galeri · Jelajahi) switches `StoryApp.view` between `story`, `gallery`, and `explore` at any time; leaving `story` resets scroll to the top and closes any open lightbox.
 - **Gallery mode:** `view = 'gallery'` shows a full overlay `GalleryGrid` — every chapter photo as a tile (caption + district accent). Clicking a tile opens a `Lightbox` (enlarged photo, caption, prev/next/close, keyboard Esc/←/→, click-backdrop to close). This revives the reference site's *gallery* mode as a simple photo grid.
-- **Explore mode (after the story):** the outro also offers an "Explore" button; `view` flips to `explore`: the map's pan/zoom/scroll-zoom handlers are enabled, all five districts render at base opacity, all landmarks show, and an `ExplorePanel` exposes toggles (landmarks, Sudirman congestion). This is the reference site's free *layers* mode, folded in after the scripted story.
+- **Explore mode (after the story):** the outro also offers an "Explore" button; `view` flips to `explore`: the map's pan/zoom/scroll-zoom handlers are enabled, all five districts render at base opacity, all landmarks show, and an `ExplorePanel` exposes layer toggles. This is the reference site's free *layers* mode, folded in after the scripted story.
 
 ```mermaid
 stateDiagram-v2
@@ -203,7 +201,7 @@ The brief asks to focus on "backend integration/APIs." The backend is the open-s
 | Component | Role | Notes |
 |-----------|------|-------|
 | **QGIS Desktop** | Authoring & analysis | Ingest and clean source data, run spatial analysis, design cartography, and author styles (export **SLD/QML**). Connects directly to PostGIS over the DB connection and publishes layers/styles to GeoServer. The analyst's cockpit — used by people, not called by the app. |
-| **PostGIS** | Spatial source of truth | PostgreSQL + PostGIS. Tables for districts / landmarks / congestion, **GiST** spatial indexes, SRID-managed geometry, SQL views for derived layers, and the mutable tables that hold **live data** (e.g. current congestion speeds). |
+| **PostGIS** | Spatial source of truth | PostgreSQL + PostGIS. Tables for districts / landmarks, **GiST** spatial indexes, SRID-managed geometry, SQL views for derived layers, and mutable tables for any **live data** (e.g. frequently updated layers). |
 | **GeoServer** | OGC service layer | Publishes PostGIS layers as **WFS** (vector → GeoJSON), **WMS**, and **WMTS / vector tiles**; applies SLD styling; caches tiles via **GeoWebCache**. This is the real geospatial "API" the frontend hits. |
 | **Frontend (Next.js + MapLibre)** | Consumer (static) | Still a static export on the CDN. MapLibre `source`s point at GeoServer WFS/WMTS endpoints, with the bundled snapshot as fallback. Scrollytelling, highlight, and explore logic are unchanged. |
 | **Snapshot export (CI)** | Build-time bridge | `ogr2ogr` (GDAL) reads PostGIS and writes `public/data/*.geojson` before `next build`, so the fallback is always a copy of the live data. |
@@ -246,18 +244,18 @@ sequenceDiagram
     M->>V: GET /geo/wmts/… tile z/x/y (districts, thematic)
     V->>G: rewrite
     G-->>M: cached tile (GeoWebCache) or render-through
-    M->>V: GET /geo/wfs?…GetFeature bbox=… (landmarks / congestion)
+    M->>V: GET /geo/wfs?…GetFeature bbox=… (landmarks)
     V->>G: rewrite
     G->>S: proxy
     S->>P: SQL over GiST index (bbox + attribute filter)
     P-->>S: rows
     S-->>M: GeoJSON
-    Note over P,S: live congestion — ETL upserts speeds into PostGIS;<br/>GeoServer serves fresh cells via WFS (and reseeds WMTS)
+    Note over P,S: live data — ETL upserts updates into PostGIS;<br/>GeoServer serves fresh features via WFS (and reseeds WMTS)
 ```
 
 ### 6.4 What the frontend consumes
 
-- **Interactive vector layers** (districts, landmarks, congestion) → **WFS `GetFeature`** returning GeoJSON, loaded into the same MapLibre `geojson` sources. Moving from `/data/jakarta-districts.geojson` to `…/geoserver/wfs?...&outputFormat=application/json` is a URL swap.
+- **Interactive vector layers** (districts, landmarks) → **WFS `GetFeature`** returning GeoJSON, loaded into the same MapLibre `geojson` sources. Moving from `/data/jakarta-districts.geojson` to `…/geoserver/wfs?...&outputFormat=application/json` is a URL swap.
 - **Basemap and heavy thematic layers** → **WMTS / vector tiles** from GeoServer + GeoWebCache (so large or frequently-drawn layers are pre-rendered, not re-queried per view).
 - The MapLibre `source` abstraction (already in `MapCanvas`) is what makes this swap a config change rather than a component rewrite.
 - **Single origin via a Vercel rewrite:** the app requests live data at its own origin, `/geo/*`, and a rewrite in `vercel.json` forwards it to the gateway. Rewrites are edge proxy rules, so they work with a static export and add no serverless functions:
@@ -286,13 +284,13 @@ ogr2ogr -f GeoJSON public/data/jakarta-districts.geojson \
   -lco COORDINATE_PRECISION=5
 ```
 
-(and likewise for landmarks and congestion; GeoServer's WFS `outputFormat=application/json` works too.) The snapshot serves three purposes: **fallback** when GeoServer is unreachable, **offline demos**, and **fast first paint** for slow-changing layers such as boundaries.
+(and likewise for landmarks; GeoServer's WFS `outputFormat=application/json` works too.) The snapshot serves three purposes: **fallback** when GeoServer is unreachable, **offline demos**, and **fast first paint** for slow-changing layers such as boundaries.
 
 **This repo today** runs the frontend in snapshot-only mode, with the snapshot seeded by `scripts/build-*.mjs` from GADM and sample data because PostGIS does not exist yet. When the backend is stood up, those scripts become one-off **seed loaders into PostGIS**, and the snapshot switches to the `ogr2ogr` export above — no app code changes.
 
 ### 6.7 Trade-offs (honest)
 
-A live backend buys server-side spatial queries, centrally managed styling, tiling, multi-source management, and live data — at the cost of **infrastructure to run, scale, secure, back up, and pay for** (database, GeoServer, gateway). Keeping the frontend static limits that cost to the data tier: the app shell never needs a server, and a backend outage degrades to the snapshot instead of a blank page. The pragmatic answer is **per dataset**: boundaries rarely change → the snapshot (or cached WMTS) is enough; congestion is live → PostGIS + WFS.
+A live backend buys server-side spatial queries, centrally managed styling, tiling, multi-source management, and live data — at the cost of **infrastructure to run, scale, secure, back up, and pay for** (database, GeoServer, gateway). Keeping the frontend static limits that cost to the data tier: the app shell never needs a server, and a backend outage degrades to the snapshot instead of a blank page. The pragmatic answer is **per dataset**: boundaries rarely change → the snapshot (or cached WMTS) is enough; frequently-updated layers are live → PostGIS + WFS.
 
 ---
 
@@ -320,14 +318,11 @@ flowchart LR
     filt -->|mapshaper simplify| simp[~≤300 KB]
     simp --> out[(public/data/jakarta-districts.geojson)]
     hand[hand-authored landmarks] --> lm[(public/data/landmarks.geojson)]
-    line[Sudirman centerline] --> gh[scripts/build-congestion.mjs<br/>ngeohash encode]
-    gh -->|precision-7 cells| cong[(public/data/congestion.geojson)]
 ```
 
 - **Boundaries:** **GADM 4.1** Indonesia level-2 (`gadm41_IDN_2`), filtered where `NAME_1 = "Jakarta Raya"` and `NAME_2` is one of the five kota (Kepulauan Seribu excluded), simplified with **mapshaper**. Build-time script, committed output. GADM properties `GID_2`/`NAME_2` are mapped to our canonical `{id, name}`.
   - **License caveat:** GADM is free for academic/non-commercial use but its license restricts redistribution and commercial use. For this assessment (non-commercial POC) we ship a simplified derivative with attribution in `CREDITS.md`; the ADR (§11) notes geoBoundaries (CC BY) or BPS/Jakarta Satu as the drop-in open-licensed source for a public/commercial build.
 - **Landmarks:** small, hand-authored GeoJSON points — fast to iterate for a POC.
-- **Congestion (Sudirman):** `scripts/build-congestion.mjs` samples the Jalan Sudirman centerline (Bundaran HI → Semanggi), encodes each sample to a **geohash (precision 7, ~150 m cells)** with **ngeohash**, dedupes, and emits one square polygon per cell (from the geohash bounds) tagged `status: "macet"`. Static sample data for the POC.
 - **Images:** one CC-licensed / public-domain photo per district (Wikimedia Commons), attributions in `public/images/CREDITS.md`.
 
 ### 7.2 Schemas
@@ -344,13 +339,6 @@ flowchart LR
 { "type": "Feature",
   "properties": { "district": "jaksel", "name": "Blok M" },
   "geometry": { "type": "Point", "coordinates": [106.7983, -6.2446] } }
-```
-
-`congestion.geojson` — `FeatureCollection` (one polygon per geohash cell):
-```jsonc
-{ "type": "Feature",
-  "properties": { "geohash": "qqgux9k", "status": "macet", "corridor": "Sudirman" },
-  "geometry": { "type": "Polygon", "coordinates": [[ /* geohash cell bounds */ ]] } }
 ```
 
 ### 7.3 Projection / CRS strategy
@@ -411,13 +399,13 @@ The frontend and backend deploy independently: the **frontend** ships through Ve
 flowchart LR
     poc[Static frontend<br/>seeded snapshot] --> v1[Static frontend<br/>+ live PostGIS / GeoServer]
     v1 --> v2[GeoWebCache + gateway<br/>CMS chapters · EN/ID]
-    v2 --> v3[Live traffic feed<br/>user-selectable datasets]
+    v2 --> v3[Live data layers<br/>user-selectable datasets]
 ```
 
-1. **POC (this build):** static frontend in snapshot-only mode — scripted narrative, five districts, hover-highlight, static Sudirman congestion overlay, explore mode.
+1. **POC (this build):** static frontend in snapshot-only mode — scripted narrative, five districts, hover-highlight, gallery, explore mode.
 2. **v1 — stand up the backend (§6):** seed **PostGIS** with the existing scripts' sources, author and style in **QGIS**, publish through **GeoServer** (WFS + WMTS), add the `/geo/*` rewrite and set `NEXT_PUBLIC_GEO_LIVE`, and switch CI to export the snapshot from PostGIS. The frontend stays a static export; only where it reads data changes.
 3. **v2:** GeoWebCache + API gateway tuning; narrative + images managed in a headless CMS with a deploy hook; EN/ID language toggle; richer explore-mode layer catalog.
-4. **v3:** **live traffic feed** replacing the static congestion sample (ETL into PostGIS, GeoServer serves fresh cells recolored by real-time speed); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
+4. **v3:** **live data layers** (ETL into PostGIS, GeoServer serves fresh features); user-chosen datasets; bookmarkable map state in the URL (the reference encodes `#!/home?view=lat|lng|zoom` — worth keeping).
 
 ---
 
@@ -434,7 +422,6 @@ flowchart LR
 | Fallback source | **`ogr2ogr` snapshot from PostGIS** at build | Separate static pipeline; no fallback | One source of truth — the fallback is a copy of the live data, not a second dataset |
 | Data entry point | **Vercel `/geo/*` rewrite** → gateway (one origin) | Browser calls the gateway's own domain (CORS) | One domain, no CORS, GeoServer address hidden; costs one edge hop and Vercel bandwidth |
 | Boundary source | **GADM 4.1** (ADM2) | geoBoundaries (CC BY), BPS, Jakarta Satu, OSM | User choice; complete IDN ADM2. Caveat: GADM restricts redistribution/commercial use (§7.1) — swap to geoBoundaries for a public/commercial build |
-| Congestion encoding | **Geohash cells** (precision 7) | GPS polyline, H3 hexagons, segment IDs | Compact, grid-aligned, trivially colorable; cells map cleanly to a GL fill layer; ngeohash is tiny |
 | Projection | Web Mercator | Custom polar stereographic (reference) | Equatorial location makes custom CRS unnecessary complexity |
 | Framework | Next.js static export — also in live mode | Plain Vite/React, Astro; SSR Next.js | Brief mandates Vercel; the story UI is identical for every visitor, so it stays static even when data goes live — only the data tier needs servers |
 | Narrative | Config-driven data | Hardcoded in components | Editable without code changes; the reference's strongest pattern |
@@ -459,11 +446,11 @@ gantt
     axisFormat %a %d
     title Jakarta WebGIS — POC to 8 Nov 2026
     section Setup & data
-    Scaffold + GADM + landmarks + congestion   :d1, 2026-11-03, 1d
+    Scaffold + GADM + landmarks   :d1, 2026-11-03, 1d
     section Map core
     Chapter/camera model + MapCanvas base       :d2, 2026-11-04, 1d
     section Interactions & UI
-    Hover + congestion + Scroller/Chapter UI     :d3, 2026-11-05, 1d
+    Hover + Scroller/Chapter UI     :d3, 2026-11-05, 1d
     section Explore & assembly
     Explore mode + StoryApp + styling            :d4, 2026-11-06, 1d
     section Content & deploy
@@ -474,11 +461,11 @@ gantt
 
 | Day | Date | Focus | Deliverable |
 |-----|------|-------|-------------|
-| 1 | Tue 3 Nov | Scaffold (Next.js static export, Vitest); data pipeline — GADM → 5 kota, landmarks, Sudirman congestion geohash | Repo builds; three GeoJSON files validated by tests |
+| 1 | Tue 3 Nov | Scaffold (Next.js static export, Vitest); data pipeline — GADM → 5 kota, landmarks | Repo builds; GeoJSON files validated by tests |
 | 2 | Wed 4 Nov | Chapter model + camera presets; MapCanvas base — map, district fill/line, active-district highlight, `flyTo` | Map renders; scripted highlight + camera works |
-| 3 | Thu 5 Nov | Hover-to-highlight (feature-state + tooltip); congestion layer (red cells); landmark markers; Scroller + Chapter panels | Scroll advances chapters; hover + congestion visible |
+| 3 | Thu 5 Nov | Hover-to-highlight (feature-state + tooltip); landmark markers; Scroller + Chapter panels | Scroll advances chapters; hover visible |
 | 4 | Fri 6 Nov | Explore mode + ExplorePanel toggles; assemble StoryApp (story↔explore); layout/styling | Full story + explore flow runs end to end |
 | 5 | Sat 7 Nov | District images + credits; README (architecture, data strategy, timeline); first Vercel deploy | Live preview URL; README complete |
 | 6 | Sun 8 Nov | QA (mobile, reduced-motion, rapid scroll, data-failure); bug buffer; final deploy; invite `catalyzecomms`; email links | **Submitted by EoD** |
 
-**Assumptions:** solo build, roughly a focused half-to-full day each. Days 5–6 hold the buffer; if earlier days slip, congestion/explore are the first polish items to trim, not the core story.
+**Assumptions:** solo build, roughly a focused half-to-full day each. Days 5–6 hold the buffer; if earlier days slip, gallery/explore are the first polish items to trim, not the core story.

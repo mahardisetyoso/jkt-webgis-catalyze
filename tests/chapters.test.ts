@@ -33,10 +33,4 @@ describe("chapters", () => {
     }
   });
 
-  it("flags only the jakpus chapter for congestion", () => {
-    for (const c of chapters) {
-      if (c.id === "jakpus") expect(c.congestion).toBe(true);
-      else expect(c.congestion).not.toBe(true);
-    }
-  });
 });

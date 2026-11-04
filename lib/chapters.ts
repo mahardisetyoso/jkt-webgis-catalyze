@@ -17,7 +17,6 @@ export type Chapter = {
   body: string;
   photos: Photo[];
   view: MapView;
-  congestion?: boolean;
 };
 
 // One accent colour per district; drives the map fill, card accents and dots.
@@ -48,10 +47,9 @@ export const chapters: Chapter[] = [
     subtitle: "Jantung bisnis",
     theme: "Bisnis",
     color: districtColors.jakpus,
-    body: "Menara kantor berjajar di sepanjang koridor Sudirman dan kawasan SCBD. Di jam pulang kantor, jalur inilah yang paling dulu memerah — sel-sel merah di peta adalah grid geohash yang menandai titik macet.",
+    body: "Menara kantor berjajar di sepanjang koridor Sudirman dan kawasan SCBD — jantung ekonomi ibu kota dan kawasan tersibuknya di jam kerja.",
     photos: [{ src: `${P}/scbd.jpg`, caption: "SCBD", position: "center 35%" }],
     view: mapViews.jakpus,
-    congestion: true,
   },
   {
     id: "jakbar",

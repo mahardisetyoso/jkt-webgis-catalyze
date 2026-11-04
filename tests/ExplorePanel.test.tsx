@@ -4,7 +4,7 @@ import ExplorePanel from "../components/ExplorePanel";
 
 const layers = [
   { id: "landmarks", label: "Penanda lokasi", visible: true },
-  { id: "congestion", label: "Kemacetan Sudirman", visible: false },
+  { id: "labels", label: "Label distrik", visible: false },
 ];
 
 describe("ExplorePanel", () => {

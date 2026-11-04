@@ -44,11 +44,6 @@ export function landmarkFilter(activeId: string | null): FilterSpecification {
   return ["==", ["get", "district"], activeId ?? NONE] as ExpressionSpecification;
 }
 
-// Static red fill for congested (macet) geohash cells.
-export function congestionPaint(): { "fill-color": string; "fill-opacity": number } {
-  return { "fill-color": "#e53935", "fill-opacity": 0.5 };
-}
-
 // Reduced motion jumps instantly; otherwise animate the camera.
 export function cameraMove(reducedMotion: boolean): "jumpTo" | "flyTo" {
   return reducedMotion ? "jumpTo" : "flyTo";
@@ -62,11 +57,6 @@ export function mapInteractive(mode: Mode): boolean {
 // Matches only the given district (or nothing) — used for the active outline/glow.
 export function districtIdFilter(id: string | null): FilterSpecification {
   return ["==", ["get", "id"], id ?? NONE] as ExpressionSpecification;
-}
-
-// Breathing opacity for the congestion cells, t in seconds. Stays in [0.2, 0.7].
-export function congestionPulseOpacity(t: number): number {
-  return 0.45 + 0.25 * Math.sin(t * 3);
 }
 
 export type Padding = { top: number; bottom: number; left: number; right: number };

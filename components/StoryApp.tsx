@@ -11,7 +11,7 @@ import Lightbox from "./Lightbox";
 import { chapters } from "@/lib/chapters";
 import { mapViews } from "@/lib/mapViews";
 
-type ExploreLayers = { landmarks: boolean; congestion: boolean };
+type ExploreLayers = { landmarks: boolean };
 
 // All chapter photos flattened into gallery items (static — chapters never change).
 const galleryItems: GalleryItem[] = chapters.flatMap((c) =>
@@ -28,10 +28,7 @@ export default function StoryApp() {
   const [view, setView] = useState<ViewMode>("story");
   const [reduced, setReduced] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [layers, setLayers] = useState<ExploreLayers>({
-    landmarks: true,
-    congestion: true,
-  });
+  const [layers, setLayers] = useState<ExploreLayers>({ landmarks: true });
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -58,7 +55,6 @@ export default function StoryApp() {
         activeDistrictId: null,
         view: mapViews.overview,
         mode: mapMode,
-        showCongestion: layers.congestion,
         showAllLandmarks: layers.landmarks,
         reducedMotion: reduced,
       }
@@ -66,7 +62,6 @@ export default function StoryApp() {
         activeDistrictId: chapter.districtId,
         view: chapter.view,
         mode: mapMode,
-        showCongestion: chapter.congestion === true,
         showAllLandmarks: false,
         reducedMotion: reduced,
       };
@@ -109,11 +104,6 @@ export default function StoryApp() {
           <ExplorePanel
             layers={[
               { id: "landmarks", label: "Penanda lokasi", visible: layers.landmarks },
-              {
-                id: "congestion",
-                label: "Kemacetan Sudirman",
-                visible: layers.congestion,
-              },
             ]}
             onToggle={(id) =>
               setLayers((s) => ({ ...s, [id]: !s[id as keyof ExploreLayers] }))
