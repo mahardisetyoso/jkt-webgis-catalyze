@@ -20,3 +20,6 @@ Thumbs.db
 
 # superpowers execution scratch (ledger, briefs)
 .superpowers/
+
+# editor / tooling
+.claude/
