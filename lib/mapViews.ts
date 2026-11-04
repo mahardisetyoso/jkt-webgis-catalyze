@@ -13,8 +13,8 @@ export type MapView = {
 export const mapViews: Record<string, MapView> = {
   overview: { center: [106.83, -6.215], zoom: 10.4, pitch: 0, bearing: 0 },
   jakpus: { center: [106.812, -6.219], zoom: 14.3, pitch: 52, bearing: -18 },
-  jakbar: { center: [106.768, -6.17], zoom: 12.7, pitch: 40, bearing: 12 },
-  jaksel: { center: [106.806, -6.252], zoom: 13.2, pitch: 40, bearing: -10 },
-  jakut: { center: [106.778, -6.128], zoom: 12.3, pitch: 35, bearing: 8 },
-  jaktim: { center: [106.885, -6.24], zoom: 11.3, pitch: 35, bearing: -8 },
+  jakbar: { center: [106.789, -6.17], zoom: 14.4, pitch: 50, bearing: 12 },
+  jaksel: { center: [106.806, -6.251], zoom: 14.2, pitch: 50, bearing: -10 },
+  jakut: { center: [106.813, -6.148], zoom: 14.4, pitch: 50, bearing: 8 },
+  jaktim: { center: [106.905, -6.186], zoom: 14.0, pitch: 48, bearing: -8 },
 };

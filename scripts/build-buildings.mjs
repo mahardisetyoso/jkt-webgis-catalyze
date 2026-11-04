@@ -5,8 +5,17 @@
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-// Sudirman corridor + SCBD: S, W, N, E
-const BBOX = [-6.232, 106.803, -6.208, 106.824];
+// One dense signature area per district (center lon, lat) — each chapter's
+// camera zooms here, so every district gets a 3D cluster.
+const CLUSTERS = [
+  { id: "jakpus", lon: 106.812, lat: -6.219 }, // Sudirman / SCBD
+  { id: "jakbar", lon: 106.789, lat: -6.17 }, // Grogol (Trisakti/Untar)
+  { id: "jaksel", lon: 106.806, lat: -6.251 }, // Blok M
+  { id: "jakut", lon: 106.813, lat: -6.148 }, // Glodok / Pecinan
+  { id: "jaktim", lon: 106.905, lat: -6.186 }, // Pulogadung
+];
+const HALF_LON = 0.0075; // ~0.83 km
+const HALF_LAT = 0.0065; // ~0.72 km
 const OUT = resolve("public/data/buildings.geojson");
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -14,10 +23,12 @@ const ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
-const [S, W, N, E] = BBOX;
-// All building footprints in the bbox (not only tagged ones), so coverage is even.
-const QUERY = `[out:json][timeout:180];(
-  way["building"](${S},${W},${N},${E});
+// All building footprints in each cluster bbox (not only tagged), so coverage is even.
+const QUERY = `[out:json][timeout:240];(
+${CLUSTERS.map(
+  (c) =>
+    `  way["building"](${(c.lat - HALF_LAT).toFixed(5)},${(c.lon - HALF_LON).toFixed(5)},${(c.lat + HALF_LAT).toFixed(5)},${(c.lon + HALF_LON).toFixed(5)});`,
+).join("\n")}
 );out geom;`;
 
 const round = (n) => Math.round(n * 1e5) / 1e5; // ~1 m

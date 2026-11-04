@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-// Sudirman–SCBD area (loose bound)
-const BBOX = { minLon: 106.79, maxLon: 106.83, minLat: -6.24, maxLat: -6.2 };
+// Five district clusters span this loose bound (Grogol → Pulogadung, Glodok → Blok M)
+const BBOX = { minLon: 106.77, maxLon: 106.92, minLat: -6.26, maxLat: -6.14 };
 
 const fc = JSON.parse(
   readFileSync(resolve(process.cwd(), "public/data/buildings.geojson"), "utf-8"),
