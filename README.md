@@ -113,6 +113,9 @@ time). In MapTiler Cloud, restrict the key to your Vercel domain(s).
     public or commercial build, swap in [geoBoundaries](https://www.geoboundaries.org)
     (CC BY) or BPS / Jakarta Satu data — a one-file change in the build script.
 - **Landmarks:** hand-authored `public/data/landmarks.geojson` (points per district).
+- **3D buildings:** `scripts/build-buildings.mjs` pulls OSM building footprints with a
+  height/levels tag in the Sudirman–SCBD bbox (Overpass API, © OpenStreetMap ODbL) into
+  `public/data/buildings.geojson`, rendered as a MapLibre `fill-extrusion` layer.
 - **CRS:** WGS84 (EPSG:4326) in storage, Web Mercator at render time. Jakarta is
   equatorial, so the Arctic polar-stereographic projection the reference site needed
   (EPSG:5937) is deliberately **not** used here.
@@ -142,6 +145,7 @@ QA, analytics): ~3–4 weeks.
 - Chapter-dot navigator, per-district accent colours, glowing active boundary
 - Active-district highlight (others dimmed) + **hover-to-highlight** with name tooltip
 - Landmark markers per district, coloured by district
+- **3D buildings** — extruded OSM footprints across Sudirman–SCBD, revealed on the Jakarta Pusat chapter (tilted camera)
 - **Explore mode** after the story: free pan/zoom + layer toggles
 - **Gallery mode**: grid of all district photos with a lightbox (prev/next/close, keyboard)
 - Persistent **three-mode nav** (Cerita · Galeri · Jelajahi) to switch modes anytime
@@ -222,8 +226,8 @@ app/            Next.js App Router (layout, page, global CSS)
 components/      MapCanvas, Scroller, Chapter, ChapterDots, StoryApp,
                  ModeNav, ExplorePanel, GalleryGrid, Lightbox
 lib/            chapters, mapViews, mapLayers, basemap, useScrollChapter
-scripts/        build-districts / build-images
-public/data/     districts, landmarks GeoJSON
+scripts/        build-districts / build-images / build-buildings
+public/data/     districts, landmarks, buildings GeoJSON
 public/images/   district photos in photos/ (+ CREDITS.md)
 tests/           Vitest suites
 docs/            architecture.md + implementation plan

@@ -6,6 +6,7 @@ import {
   mapInteractive,
   districtColorExpr,
   districtIdFilter,
+  buildingExtrusionPaint,
   cameraPadding,
 } from "../lib/mapLayers";
 import { districtColors } from "../lib/chapters";
@@ -92,6 +93,15 @@ describe("districtIdFilter", () => {
     expect(evalExpr(districtIdFilter("jakut"), { id: "jakut" })).toBe(true);
     expect(evalExpr(districtIdFilter("jakut"), { id: "jaksel" })).toBe(false);
     expect(evalExpr(districtIdFilter(null), { id: "jakut" })).toBe(false);
+  });
+});
+
+describe("buildingExtrusionPaint", () => {
+  it("extrudes by the feature height property", () => {
+    const p = buildingExtrusionPaint();
+    expect(p["fill-extrusion-height"]).toEqual(["get", "height"]);
+    expect(p["fill-extrusion-color"]).toBeTruthy();
+    expect(p["fill-extrusion-base"]).toBe(0);
   });
 });
 

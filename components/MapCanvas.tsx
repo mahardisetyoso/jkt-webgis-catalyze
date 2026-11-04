@@ -6,6 +6,7 @@ import { basemapFromProcessEnv } from "@/lib/basemap";
 import {
   districtFillPaint,
   landmarkFilter,
+  buildingExtrusionPaint,
   cameraMove,
   cameraPadding,
   districtColorExpr,
@@ -140,6 +141,10 @@ export default function MapCanvas({
         type: "geojson",
         data: "/data/landmarks.geojson",
       });
+      map.addSource("buildings", {
+        type: "geojson",
+        data: "/data/buildings.geojson",
+      });
 
       // On a vector basemap, slot the story polygons beneath its first label layer
       // so street/place names stay readable; landmarks still go on top.
@@ -178,6 +183,12 @@ export default function MapCanvas({
         filter: districtIdFilter(propsRef.current.activeDistrictId),
         paint: { "line-color": "#ffffff", "line-width": 2.6 },
       }, beforeLabels);
+      map.addLayer({
+        id: "buildings",
+        type: "fill-extrusion",
+        source: "buildings",
+        paint: buildingExtrusionPaint(),
+      });
       map.addLayer({
         id: "landmarks",
         type: "circle",
