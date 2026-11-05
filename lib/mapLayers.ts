@@ -59,24 +59,6 @@ export function districtIdFilter(id: string | null): FilterSpecification {
   return ["==", ["get", "id"], id ?? NONE] as ExpressionSpecification;
 }
 
-// 3D building extrusion: height (metres) read from each feature's `height` prop.
-export function buildingExtrusionPaint(): {
-  "fill-extrusion-color": string;
-  "fill-extrusion-height": DataDrivenPropertyValueSpecification<number>;
-  "fill-extrusion-base": number;
-  "fill-extrusion-opacity": number;
-} {
-  return {
-    "fill-extrusion-color": "#9fb4d0",
-    "fill-extrusion-height": [
-      "get",
-      "height",
-    ] as unknown as DataDrivenPropertyValueSpecification<number>,
-    "fill-extrusion-base": 0,
-    "fill-extrusion-opacity": 0.85,
-  };
-}
-
 export type Padding = { top: number; bottom: number; left: number; right: number };
 
 // Camera padding that keeps the active subject clear of the chapter card:

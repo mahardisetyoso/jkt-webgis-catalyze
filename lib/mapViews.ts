@@ -12,12 +12,9 @@ export type MapView = {
 // (see cameraPadding in lib/mapLayers.ts), not by nudging the center.
 export const mapViews: Record<string, MapView> = {
   overview: { center: [106.83, -6.215], zoom: 10.4, pitch: 0, bearing: 0 },
-  // Street-level "among the buildings": deep zoom + high pitch (needs maxPitch
-  // raised in MapCanvas). At this extreme the district boundary and markers fall
-  // out of frame — the trade for the immersive POV.
-  jakpus: { center: [106.8105, -6.2235], zoom: 16.3, pitch: 76, bearing: -18 },
-  jakbar: { center: [106.789, -6.169], zoom: 16.3, pitch: 76, bearing: 12 },
-  jaksel: { center: [106.7985, -6.2445], zoom: 16.3, pitch: 76, bearing: -10 },
-  jakut: { center: [106.8135, -6.1465], zoom: 16.3, pitch: 76, bearing: 8 },
-  jaktim: { center: [106.906, -6.185], zoom: 16.3, pitch: 76, bearing: -8 },
+  jakpus: { center: [106.818, -6.203], zoom: 12.9, pitch: 45, bearing: -18 },
+  jakbar: { center: [106.768, -6.17], zoom: 12.7, pitch: 40, bearing: 12 },
+  jaksel: { center: [106.806, -6.252], zoom: 13.2, pitch: 40, bearing: -10 },
+  jakut: { center: [106.778, -6.128], zoom: 12.3, pitch: 35, bearing: 8 },
+  jaktim: { center: [106.885, -6.24], zoom: 11.3, pitch: 35, bearing: -8 },
 };
