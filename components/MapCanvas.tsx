@@ -119,6 +119,7 @@ export default function MapCanvas({
       style: BASEMAP,
       center: view.center,
       zoom: view.zoom,
+      maxPitch: 85,
       attributionControl: { compact: true },
     });
     mapRef.current = map;

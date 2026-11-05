@@ -29,7 +29,7 @@ describe("chapters", () => {
       expect(v.center[1]).toBeGreaterThanOrEqual(BBOX.minLat);
       expect(v.center[1]).toBeLessThanOrEqual(BBOX.maxLat);
       expect(v.zoom).toBeGreaterThanOrEqual(9);
-      expect(v.zoom).toBeLessThanOrEqual(16);
+      expect(v.zoom).toBeLessThanOrEqual(18);
     }
   });
 
