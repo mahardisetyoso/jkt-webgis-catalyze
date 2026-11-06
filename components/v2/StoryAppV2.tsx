@@ -114,6 +114,11 @@ export default function StoryAppV2() {
 
       {isGallery && (
         <div className="v2-overlay v2-gallery">
+          <div className="v2-gallery-head">
+            <div className="v2-eyebrow"><span className="v2-bar" />Galeri</div>
+            <h2 className="v2-gallery-title">Landmark lima kota</h2>
+            <p className="v2-gallery-sub">{galleryItems.length} foto · klik untuk memperbesar</p>
+          </div>
           <GalleryGrid items={galleryItems} onOpen={setLightbox} />
           {lightbox !== null && (
             <Lightbox
