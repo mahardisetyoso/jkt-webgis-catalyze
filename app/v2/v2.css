@@ -2,6 +2,7 @@
    /v2 redesign — scoped entirely under .v2-root.
    The existing / route (globals.css) is untouched.
    ============================================================ */
+html,body{margin:0;background:#181818}
 .v2-root{
   --bg:#181818; --surface-1:#1F1F1F; --surface-2:#272727; --surface-3:#313131;
   --ink:#FFFFFF; --ink-2:#B5B5B5; --ink-3:#8A8A8A; --muted:#5a5a5a;

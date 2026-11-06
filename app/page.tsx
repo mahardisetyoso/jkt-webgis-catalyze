@@ -1,13 +1,5 @@
-import StoryApp from "@/components/StoryApp";
+import StoryAppV2 from "@/components/v2/StoryAppV2";
 
 export default function Home() {
-  return (
-    <main>
-      <header className="app-header">
-        <span className="brand">Jakarta · Lima Wajah Satu Kota</span>
-        <span className="tagline">WebGIS storytelling · 5 kota administrasi</span>
-      </header>
-      <StoryApp />
-    </main>
-  );
+  return <StoryAppV2 />;
 }
