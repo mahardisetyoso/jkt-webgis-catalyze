@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redesign · CTA — Peta masih terbuka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/2.1.1/regular/style.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" />
+<style>
+  :root{
+    --bg:#181818; --surface-1:#1F1F1F; --surface-2:#272727; --surface-3:#313131;
+    --ink:#FFFFFF; --ink-2:#B5B5B5; --ink-3:#8A8A8A; --muted:#5a5a5a;
+    --line:rgba(255,255,255,.09);
+    --accent:#E0A458; --accent-ink:#1a1206;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+    --s4:4px;--s8:8px;--s12:12px;--s16:16px;--s24:24px;--s32:32px;
+    --s40:40px;--s48:48px;--s64:64px;--s80:80px;--s96:96px;
+    --r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;--r-full:9999px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Geist",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  .cta{position:relative;min-height:100dvh;overflow:hidden;isolation:isolate;
+    display:flex;flex-direction:column}
+  #map{position:absolute;inset:0;z-index:0;
+    filter:invert(1) hue-rotate(185deg) brightness(.66) contrast(1.05) saturate(.5)}
+  .maplibregl-ctrl-attrib{filter:invert(1) hue-rotate(185deg);opacity:.5}
+  .scrim{position:absolute;inset:0;z-index:1;background:rgba(18,18,18,.72);pointer-events:none}
+
+  .inner{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;
+    justify-content:center;gap:var(--s24);max-width:760px;padding:var(--s96) var(--s48)}
+  @media (max-width:720px){.inner{padding:var(--s80) var(--s24) var(--s64)}}
+
+  .eyebrow-row{display:flex;align-items:center;gap:var(--s8)}
+  .eyebrow-row .bar{width:28px;height:1px;background:var(--accent)}
+  .eyebrow{font-size:14px;font-weight:500;letter-spacing:.04em;color:var(--ink-2)}
+
+  /* tagline reveal — words go muted -> full on scroll */
+  .tagline{margin:0;max-width:680px;font-weight:600;letter-spacing:-.025em;
+    font-size:clamp(40px,7vw,76px);line-height:1.02}
+  .tagline .w{color:var(--muted);transition:color .5s var(--ease)}
+  .tagline .w.lit{color:var(--ink)}
+
+  .subtitle{margin:0;max-width:680px;font-size:clamp(18px,2.6vw,24px);line-height:1.2;
+    font-weight:500;color:var(--ink-2)}
+  .lede{margin:0;max-width:60ch;font-size:17px;line-height:27px;color:var(--ink-2)}
+
+  .actions{display:flex;align-items:center;gap:var(--s16);flex-wrap:wrap;margin-top:var(--s8)}
+  .btn{font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:var(--s8);
+    font-size:16px;line-height:24px;font-weight:600;border-radius:var(--r-full);
+    border:1px solid transparent;padding:var(--s12) var(--s24);
+    transition:transform .5s var(--ease),background .3s var(--ease),border-color .3s var(--ease)}
+  .btn-primary{background:var(--accent);color:var(--accent-ink)}
+  .btn-primary:hover{background:#ecb968;transform:translateY(-1px)}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{background:var(--surface-2);transform:translateY(-1px)}
+  .btn-ghost:active{transform:scale(.98)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  .reassure{display:flex;gap:var(--s16);flex-wrap:wrap;margin-top:var(--s8)}
+  .reassure span{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-3)}
+  .reassure i{color:var(--accent)}
+
+  footer{position:relative;z-index:2;border-top:1px solid var(--line);
+    padding:var(--s24) var(--s48);display:flex;justify-content:space-between;
+    align-items:center;gap:var(--s16);flex-wrap:wrap;background:rgba(24,24,24,.5);
+    backdrop-filter:blur(8px)}
+  @media (max-width:720px){footer{padding:var(--s24)}}
+  footer .brand{display:flex;align-items:center;gap:var(--s8);font-size:14px;font-weight:600}
+  footer .brand .dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--accent)}
+  footer nav{display:flex;gap:var(--s24)}
+  footer nav a{color:var(--ink-3);text-decoration:none;font-size:13px;transition:color .3s var(--ease)}
+  footer nav a:hover{color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important}
+    .tagline .w{color:var(--ink)}
+  }
+</style>
+</head>
+<body>
+  <section class="cta">
+    <div id="map" aria-hidden="true"></div>
+    <div class="scrim"></div>
+
+    <div class="inner">
+      <div class="eyebrow-row"><span class="bar"></span><span class="eyebrow">Penutup</span></div>
+      <h2 class="tagline" id="tagline">Lima kota, satu Jakarta.</h2>
+      <p class="subtitle">Ceritanya selesai, petanya masih terbuka.</p>
+      <p class="lede">Jelajahi petanya dengan bebas — nyalakan lapisan yang kamu mau — atau lihat README untuk arsitektur, strategi data, dan timeline.</p>
+
+      <div class="actions">
+        <button class="btn btn-primary"><i class="ph ph-compass"></i> Jelajahi peta</button>
+        <button class="btn btn-ghost"><i class="ph ph-file-text"></i> Baca arsitektur</button>
+      </div>
+
+      <div class="reassure">
+        <span><i class="ph ph-lock-simple-open"></i> Tanpa login</span>
+        <span><i class="ph ph-database"></i> Data terbuka — GADM &amp; OSM</span>
+        <span><i class="ph ph-stack"></i> PostGIS + GeoServer</span>
+      </div>
+    </div>
+
+    <footer>
+      <span class="brand"><span class="dot"></span>Jakarta · Lima Wajah Satu Kota</span>
+      <nav>
+        <a href="#">README</a>
+        <a href="#">Arsitektur</a>
+        <a href="#">Strategi data</a>
+        <a href="#">Repo</a>
+      </nav>
+    </footer>
+  </section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script>
+  const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // tagline reveal: split into words, light them up one-by-one on scroll
+  const tag=document.getElementById("tagline");
+  const words=tag.textContent.split(" ");
+  tag.textContent="";
+  words.forEach((w,i)=>{
+    const s=document.createElement("span");
+    s.className="w"; s.textContent=w; s.style.transitionDelay=(i*0.08)+"s";
+    tag.appendChild(s); tag.appendChild(document.createTextNode(" "));
+  });
+  const wEls=[...tag.querySelectorAll(".w")];
+  if(reduced){ wEls.forEach(w=>w.classList.add("lit")); }
+  else{
+    const io=new IntersectionObserver((es)=>{
+      es.forEach(e=>{ if(e.isIntersecting){ wEls.forEach(w=>w.classList.add("lit")); io.disconnect(); } });
+    },{threshold:.5});
+    io.observe(tag);
+  }
+
+  // living basemap bookend (basemap only, no spatial data)
+  try{
+    const map=new maplibregl.Map({
+      container:"map",
+      style:{version:8,
+        sources:{osm:{type:"raster",tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png","https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256,attribution:"© OpenStreetMap"}},
+        layers:[{id:"osm",type:"raster",source:"osm"}]},
+      center:[106.83,-6.215], zoom:10.6, bearing:8, interactive:false
+    });
+    if(!reduced){ map.on("load",()=>{ let b=8; setInterval(()=>{ b-=0.02; map.setBearing(b); },60); }); }
+  }catch(e){}
+</script>
+</body>
+</html>

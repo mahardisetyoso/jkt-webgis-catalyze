@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redesign · Benefits — Lima wajah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/2.1.1/regular/style.min.css" />
+<style>
+  :root{
+    --bg:#181818; --surface-1:#1F1F1F; --surface-2:#272727; --surface-3:#313131;
+    --ink:#FFFFFF; --ink-2:#B5B5B5; --ink-3:#8A8A8A;
+    --line:rgba(255,255,255,.09);
+    --accent:#E0A458; --accent-ink:#1a1206;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+    --s2:2px;--s4:4px;--s8:8px;--s12:12px;--s16:16px;--s24:24px;--s32:32px;
+    --s40:40px;--s48:48px;--s64:64px;--s80:80px;--s96:96px;
+    --r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;--r-full:9999px;
+    /* district DATA colours (owned by the map style) */
+    --d-jakpus:#f4a261; --d-jakbar:#2ec4b6; --d-jaksel:#c77dff;
+    --d-jakut:#4cc9f0; --d-jaktim:#90be6d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Geist",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:var(--s96) var(--s48)}
+  @media (max-width:720px){.wrap{padding:var(--s64) var(--s24)}}
+
+  /* section header */
+  .head{max-width:680px;margin-bottom:var(--s64)}
+  .eyebrow-row{display:flex;align-items:center;gap:var(--s8);margin-bottom:var(--s16)}
+  .eyebrow-row .bar{width:28px;height:1px;background:var(--accent)}
+  .eyebrow{font-size:14px;line-height:20px;font-weight:500;letter-spacing:.04em;color:var(--ink-2)}
+  h2{margin:0 0 var(--s16);font-size:clamp(32px,5vw,48px);line-height:1.04;
+    font-weight:600;letter-spacing:-.02em;color:var(--ink)}
+  .head p{margin:0;font-size:18px;line-height:28px;color:var(--ink-2)}
+
+  /* two-column: sticky schematic rail + zig-zag stream */
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:var(--s64);align-items:start}
+  @media (max-width:980px){.grid{grid-template-columns:1fr;gap:var(--s40)}}
+
+  .rail{position:sticky;top:var(--s32);display:flex;flex-direction:column;gap:var(--s16)}
+  @media (max-width:980px){.rail{position:static}}
+  .rail-card{border:1px solid var(--line);border-radius:var(--r-2xl);background:var(--surface-1);
+    padding:var(--s24)}
+  .rail-card .cap{font-size:12px;line-height:16px;color:var(--ink-3);display:flex;
+    align-items:center;gap:6px;margin-top:var(--s12)}
+  .rail-card .cap i{color:var(--accent)}
+  svg.schema{width:100%;height:auto;display:block}
+  svg.schema .blk{fill:var(--c);fill-opacity:.16;stroke:var(--c);stroke-opacity:.5;stroke-width:1.5;
+    cursor:pointer;transition:fill-opacity .3s var(--ease),stroke-opacity .3s var(--ease)}
+  svg.schema .blk:hover{fill-opacity:.4}
+  svg.schema .blk.active{fill-opacity:.62;stroke-opacity:1}
+  svg.schema text{fill:var(--ink);font-size:9px;font-weight:600;pointer-events:none;
+    font-family:"Geist",sans-serif}
+  /* tooltip/info readout */
+  .readout{margin-top:var(--s16);min-height:52px}
+  .readout .name{font-size:16px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:var(--s8)}
+  .readout .name .sw{width:10px;height:10px;border-radius:3px;background:var(--c,#fff)}
+  .readout .theme{font-size:13px;color:var(--ink-2);margin-top:2px}
+
+  /* zig-zag rows */
+  .stream{display:flex;flex-direction:column;gap:var(--s80)}
+  @media (max-width:720px){.stream{gap:var(--s48)}}
+  .row{display:grid;grid-template-columns:7fr 5fr;gap:var(--s40);align-items:center;
+    scroll-margin-top:var(--s32);
+    opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  .row.in{opacity:1;transform:none}
+  .row:nth-child(even){grid-template-columns:5fr 7fr}
+  .row:nth-child(even) .media{order:2}
+  .row:nth-child(even) .copy{order:1}
+  @media (max-width:720px){.row,.row:nth-child(even){grid-template-columns:1fr}
+    .row .media,.row .copy{order:0}}
+
+  .media{position:relative;border-radius:var(--r-2xl);overflow:hidden;aspect-ratio:4/3;
+    border:1px solid var(--line);background:var(--surface-2)}
+  .media img{width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .6s var(--ease);transform:scale(1.02)}
+  .media:hover img{transform:scale(1.07)}
+  .media .tag{position:absolute;left:var(--s12);bottom:var(--s12);z-index:2;
+    font-size:12px;font-weight:600;color:#fff;padding:var(--s4) var(--s8);border-radius:var(--r-md);
+    background:rgba(18,18,18,.6);backdrop-filter:blur(6px)}
+  .media .edge{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+    box-shadow:inset 0 0 0 2px transparent;transition:box-shadow .3s var(--ease)}
+  .media:hover .edge{box-shadow:inset 0 0 0 2px var(--c)}
+
+  .copy .idx{font-family:"Geist Mono",monospace;font-size:14px;font-weight:600;
+    color:var(--c);letter-spacing:.1em}
+  .copy h3{margin:var(--s8) 0 var(--s4);font-size:28px;line-height:1.1;font-weight:600;
+    letter-spacing:-.02em;color:var(--ink)}
+  .copy .sub{margin:0 0 var(--s16);font-size:16px;color:var(--ink-2)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    color:var(--c);border:1px solid var(--c);border-radius:var(--r-md);padding:3px var(--s8);
+    margin-bottom:var(--s16)}
+  .badge .sw{width:8px;height:8px;border-radius:2px;background:var(--c)}
+  .copy p.body{margin:0 0 var(--s16);font-size:16px;line-height:26px;color:var(--ink-2);max-width:60ch}
+  .chips{display:flex;flex-wrap:wrap;gap:var(--s8)}
+  .chip{font-size:12px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);
+    border-radius:var(--r-full);padding:4px var(--s12);transition:border-color .3s var(--ease),color .3s var(--ease)}
+  .chip:hover{border-color:var(--c);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){
+    .row{opacity:1;transform:none;transition:none}
+    .media img{transform:none}
+    *{transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow-row"><span class="bar"></span><span class="eyebrow">Lima kota administrasi</span></div>
+    <h2>Satu kota, lima denyut</h2>
+    <p>Setiap kota administrasi punya karakternya sendiri. Arahkan kursor ke skema untuk menyorotinya, atau gulir untuk menyusurinya satu per satu.</p>
+  </header>
+
+  <div class="grid">
+    <!-- interactive schematic rail -->
+    <aside class="rail">
+      <div class="rail-card">
+        <svg class="schema" viewBox="0 0 200 196" role="img" aria-label="Skema lima kota administrasi Jakarta">
+          <rect class="blk" data-id="jakut"  x="16" y="14"  width="168" height="40" rx="7" style="--c:var(--d-jakut)"/>
+          <text x="100" y="38" text-anchor="middle">UTARA</text>
+          <rect class="blk" data-id="jakbar" x="16" y="62"  width="54"  height="72" rx="7" style="--c:var(--d-jakbar)"/>
+          <text x="43" y="101" text-anchor="middle">BARAT</text>
+          <rect class="blk" data-id="jakpus" x="78" y="62"  width="44"  height="50" rx="7" style="--c:var(--d-jakpus)"/>
+          <text x="100" y="90" text-anchor="middle">PUSAT</text>
+          <rect class="blk" data-id="jaktim" x="130" y="62" width="54"  height="120" rx="7" style="--c:var(--d-jaktim)"/>
+          <text x="157" y="124" text-anchor="middle">TIMUR</text>
+          <rect class="blk" data-id="jaksel" x="16" y="120" width="106" height="62" rx="7" style="--c:var(--d-jaksel)"/>
+          <text x="69" y="155" text-anchor="middle">SELATAN</text>
+        </svg>
+        <div class="readout" id="readout">
+          <div class="name"><span class="sw"></span><span id="ro-name">Arahkan ke sebuah kota</span></div>
+          <div class="theme" id="ro-theme">Hover atau gulir untuk melihat temanya</div>
+        </div>
+        <div class="cap"><i class="ph ph-polygon"></i> Skema — geometri asli dari GeoServer</div>
+      </div>
+    </aside>
+
+    <!-- zig-zag stream -->
+    <div class="stream" id="stream">
+      <article class="row" id="jakpus" style="--c:var(--d-jakpus)">
+        <div class="media"><img src="img/scbd.jpg" alt="Kawasan SCBD, Jakarta Pusat" style="object-position:center 35%" onerror="this.src='https://picsum.photos/seed/scbd/800/600'"><span class="tag">SCBD</span><span class="edge"></span></div>
+        <div class="copy">
+          <div class="idx">01</div><h3>Jakarta Pusat</h3><div class="sub">Jantung bisnis</div>
+          <span class="badge"><span class="sw"></span>Bisnis</span>
+          <p class="body">Menara kantor berjajar di sepanjang koridor Sudirman dan kawasan SCBD — jantung ekonomi ibu kota dan kawasan tersibuknya di jam kerja.</p>
+          <div class="chips"><span class="chip">Sudirman</span><span class="chip">SCBD</span></div>
+        </div>
+      </article>
+
+      <article class="row" id="jakbar" style="--c:var(--d-jakbar)">
+        <div class="media"><img src="img/trisakti.jpg" alt="Universitas Trisakti, Jakarta Barat" style="object-position:center 60%" onerror="this.src='https://picsum.photos/seed/trisakti/800/600'"><span class="tag">Universitas Trisakti</span><span class="edge"></span></div>
+        <div class="copy">
+          <div class="idx">02</div><h3>Jakarta Barat</h3><div class="sub">Kampus dan kuliner</div>
+          <span class="badge"><span class="sw"></span>Pendidikan &amp; Kuliner</span>
+          <p class="body">Di sekitar Grogol, tiga kampus besar berdiri hampir berdampingan — Trisakti, Untar, dan Ciputra. Ribuan mahasiswanya menghidupi Tanjung Duren, salah satu pusat kuliner paling ramai di barat Jakarta.</p>
+          <div class="chips"><span class="chip">Trisakti</span><span class="chip">Untar</span><span class="chip">Ciputra</span><span class="chip">Tanjung Duren</span></div>
+        </div>
+      </article>
+
+      <article class="row" id="jaksel" style="--c:var(--d-jaksel)">
+        <div class="media"><img src="img/mbloc.jpg" alt="M Bloc Space, Jakarta Selatan" style="object-position:center 30%" onerror="this.src='https://picsum.photos/seed/mbloc/800/600'"><span class="tag">M Bloc Space</span><span class="edge"></span></div>
+        <div class="copy">
+          <div class="idx">03</div><h3>Jakarta Selatan</h3><div class="sub">Budaya pop dan hiburan</div>
+          <span class="badge"><span class="sw"></span>Pop Culture &amp; Hiburan</span>
+          <p class="body">Blok M sudah jadi tempat nongkrong sejak puluhan tahun lalu dan kini hidup lagi bersama MRT dan M Bloc Space, bekas kompleks Peruri yang disulap jadi ruang kreatif dan live house. Sedikit ke selatan, Kemang melengkapi panggung anak muda Jakarta.</p>
+          <div class="chips"><span class="chip">Blok M</span><span class="chip">MRT</span><span class="chip">M Bloc Space</span><span class="chip">Kemang</span></div>
+        </div>
+      </article>
+
+      <article class="row" id="jakut" style="--c:var(--d-jakut)">
+        <div class="media"><img src="img/pik.jpg" alt="Pantjoran PIK, Jakarta Utara" style="object-position:center 30%" onerror="this.src='https://picsum.photos/seed/pik/800/600'"><span class="tag">Pantjoran PIK</span><span class="edge"></span></div>
+        <div class="copy">
+          <div class="idx">04</div><h3>Jakarta Utara</h3><div class="sub">Perdagangan dan pecinan</div>
+          <span class="badge"><span class="sw"></span>Perdagangan &amp; Pecinan</span>
+          <p class="body">Wajah pesisir Jakarta: kawasan modern PIK di barat laut, hingga jalur dagang lama di sekitar Glodok yang berakar dari pecinan Batavia. Di sinilah Jakarta paling dekat dengan lautnya.</p>
+          <div class="chips"><span class="chip">PIK</span><span class="chip">Glodok</span><span class="chip">Pecinan Batavia</span></div>
+        </div>
+      </article>
+
+      <article class="row" id="jaktim" style="--c:var(--d-jaktim)">
+        <div class="media"><img src="img/pulogadung.jpg" alt="Kawasan Industri Pulogadung, Jakarta Timur" style="object-position:center 50%" onerror="this.src='https://picsum.photos/seed/pulogadung/800/600'"><span class="tag">Kawasan Industri Pulogadung</span><span class="edge"></span></div>
+        <div class="copy">
+          <div class="idx">05</div><h3>Jakarta Timur</h3><div class="sub">Mesin industri kota</div>
+          <span class="badge"><span class="sw"></span>Industri Manufaktur</span>
+          <p class="body">Kota administrasi terluas di Jakarta. Kawasan Industri Pulogadung (JIEP) menjadi motor manufakturnya, tempat pabrik dan gudang menopang rantai pasok ibu kota.</p>
+          <div class="chips"><span class="chip">Pulogadung</span><span class="chip">JIEP</span></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<script>
+  const META = {
+    jakpus:{name:"Jakarta Pusat",theme:"Bisnis · Sudirman, SCBD",c:"var(--d-jakpus)"},
+    jakbar:{name:"Jakarta Barat",theme:"Pendidikan & Kuliner · Grogol",c:"var(--d-jakbar)"},
+    jaksel:{name:"Jakarta Selatan",theme:"Pop Culture & Hiburan · Blok M",c:"var(--d-jaksel)"},
+    jakut:{name:"Jakarta Utara",theme:"Perdagangan & Pecinan · PIK, Glodok",c:"var(--d-jakut)"},
+    jaktim:{name:"Jakarta Timur",theme:"Industri Manufaktur · Pulogadung",c:"var(--d-jaktim)"},
+  };
+  const blocks = [...document.querySelectorAll(".schema .blk")];
+  const roName=document.getElementById("ro-name"), roTheme=document.getElementById("ro-theme");
+  const roSw=document.querySelector("#readout .sw");
+  const rows = [...document.querySelectorAll(".row")];
+
+  function setActive(id, fromHover){
+    blocks.forEach(b=>b.classList.toggle("active", b.dataset.id===id));
+    const m=META[id]; if(!m) return;
+    roName.textContent=m.name; roTheme.textContent=m.theme;
+    roSw.style.background=m.c;
+    document.getElementById("readout").style.setProperty("--c", m.c);
+  }
+  // hover schematic -> highlight + readout
+  blocks.forEach(b=>{
+    b.addEventListener("mouseenter",()=>setActive(b.dataset.id,true));
+    b.addEventListener("click",()=>document.getElementById(b.dataset.id)
+      .scrollIntoView({behavior:"smooth",block:"center"}));
+  });
+
+  // scroll reveal + sync rail to the row in view
+  const io=new IntersectionObserver((ents)=>{
+    ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); setActive(e.target.id); } });
+  },{threshold:.35});
+  rows.forEach(r=>io.observe(r));
+</script>
+</body>
+</html>

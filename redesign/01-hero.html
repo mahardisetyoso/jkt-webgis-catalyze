@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redesign · Hero — Jakarta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/2.1.1/regular/style.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" />
+<style>
+  :root{
+    /* surfaces (dark, approved) */
+    --bg:#181818; --surface-1:#1F1F1F; --surface-2:#272727; --surface-3:#313131;
+    /* ink */
+    --ink:#FFFFFF; --ink-2:#B5B5B5; --ink-3:#8A8A8A;
+    --line:rgba(255,255,255,.09);
+    /* one accent, desaturated warm */
+    --accent:#E0A458; --accent-ink:#1a1206;
+    /* motion */
+    --ease:cubic-bezier(0.22,1,0.36,1);
+    /* spacing tokens */
+    --s2:2px; --s4:4px; --s8:8px; --s12:12px; --s16:16px; --s24:24px;
+    --s32:32px; --s40:40px; --s48:48px; --s64:64px; --s80:80px; --s96:96px;
+    /* radius (tailwind) */
+    --r-md:6px; --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Geist",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+
+  /* ---------- named text styles ---------- */
+  .eyebrow{font-size:14px;line-height:20px;font-weight:500;letter-spacing:.04em;color:var(--ink-2)}
+  .body-lg{font-size:18px;line-height:28px;font-weight:400;color:var(--ink-2)}
+  .caption{font-size:12px;line-height:16px;font-weight:500;color:var(--ink-3);letter-spacing:.02em}
+
+  /* ---------- hero shell ---------- */
+  .hero{position:relative;min-height:100dvh;width:100%;overflow:hidden;isolation:isolate}
+  /* living map — basemap only (no spatial data), dark via filter */
+  #map{position:absolute;inset:0;z-index:0;filter:invert(1) hue-rotate(185deg) brightness(.72) contrast(1.05) saturate(.55)}
+  .maplibregl-ctrl-attrib{filter:invert(1) hue-rotate(185deg);opacity:.5}
+  /* flat scrim (NOT a gradient) for legibility */
+  .scrim{position:absolute;inset:0;z-index:1;background:rgba(18,18,18,.62);pointer-events:none}
+  .scrim-edge{position:absolute;inset:0;z-index:1;background:rgba(18,18,18,.0);pointer-events:none;
+    box-shadow:inset 320px 0 220px -120px rgba(18,18,18,.92), inset 0 -220px 180px -120px rgba(18,18,18,.8)}
+
+  /* ---------- top bar (floats off the edge) ---------- */
+  .topbar{position:absolute;z-index:3;top:var(--s16);left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:var(--s24);
+    padding:var(--s8) var(--s16);border:1px solid var(--line);border-radius:var(--r-full);
+    background:rgba(31,31,31,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .topbar .mark{display:flex;align-items:center;gap:var(--s8);font-weight:600;font-size:14px}
+  .topbar .mark .dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--accent)}
+  .topbar nav{display:flex;gap:var(--s16)}
+  .topbar nav a{color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:500;
+    transition:color .3s var(--ease)}
+  .topbar nav a:hover{color:var(--ink)}
+  .topbar nav a.active{color:var(--ink)}
+  @media (max-width:720px){.topbar nav{display:none}}
+
+  /* ---------- content ---------- */
+  .content{position:relative;z-index:2;min-height:100dvh;display:flex;flex-direction:column;
+    justify-content:center;gap:var(--s24);padding:var(--s96) var(--s48) var(--s64);max-width:760px}
+  @media (max-width:720px){.content{padding:var(--s96) var(--s24) var(--s48)}}
+
+  .eyebrow-row{display:flex;align-items:center;gap:var(--s8)}
+  .eyebrow-row .bar{width:28px;height:1px;background:var(--accent)}
+
+  h1{margin:0;max-width:680px;font-weight:600;letter-spacing:-.03em;
+    font-size:clamp(56px,11vw,112px);line-height:.96;
+    background:linear-gradient(90deg,#FFFFFF 0%,#9B9B9B 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .subtitle{margin:0;max-width:680px;font-size:clamp(20px,3.4vw,30px);line-height:1.15;
+    font-weight:500;color:var(--ink)}
+  .lede{margin:0;max-width:60ch;font-size:18px;line-height:28px;color:var(--ink-2)}
+
+  /* word reveal (solid-colour text only) */
+  .reveal .word{display:inline-block;opacity:0;transform:translateY(.5em);
+    animation:rise .6s var(--ease) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  /* block reveal — keeps the gradient-clipped H1 intact */
+  .rise-block{opacity:0;transform:translateY(.4em);animation:rise .7s var(--ease) .05s forwards}
+
+  /* ---------- actions ---------- */
+  .actions{display:flex;align-items:center;gap:var(--s16);flex-wrap:wrap;margin-top:var(--s8)}
+  .btn{font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:var(--s8);
+    font-size:16px;line-height:24px;font-weight:600;border-radius:var(--r-full);
+    padding:var(--s8) var(--s12);border:1px solid transparent;
+    transition:transform .5s var(--ease),background .3s var(--ease),border-color .3s var(--ease)}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);padding:var(--s12) var(--s24)}
+  .btn-primary:hover{background:#ecb968;transform:translateY(-1px)}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);padding:var(--s12) var(--s24)}
+  .btn-ghost:hover{background:var(--surface-2);transform:translateY(-1px)}
+  .btn-ghost:active{transform:scale(.98)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  /* ---------- stat tiles ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s12);
+    margin-top:var(--s40);max-width:680px}
+  @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .tile{border:1px solid var(--line);border-radius:var(--r-xl);background:rgba(31,31,31,.55);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:var(--s16);
+    transition:transform .5s var(--ease),border-color .3s var(--ease)}
+  .tile:hover{transform:translateY(-3px);border-color:rgba(224,164,88,.5)}
+  .tile .num{font-family:"Geist Mono",monospace;font-variant-numeric:tabular-nums;
+    font-weight:600;font-size:28px;line-height:1.1;color:var(--ink)}
+  .tile .num .unit{font-size:14px;color:var(--accent);margin-left:2px}
+  .tile .label{margin-top:var(--s4);font-size:12px;line-height:16px;color:var(--ink-3)}
+  .stats-src{margin-top:var(--s12);display:flex;align-items:center;gap:6px;color:var(--ink-3);
+    font-size:12px}
+  .stats-src i{color:var(--accent)}
+
+  /* ---------- scroll cue ---------- */
+  .cue{position:absolute;z-index:2;left:var(--s48);bottom:var(--s24);
+    display:flex;align-items:center;gap:var(--s8);color:var(--ink-3);font-size:12px;font-weight:500}
+  @media (max-width:720px){.cue{left:var(--s24)}}
+  .cue i{animation:bob 1.8s var(--ease) infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+
+  @media (prefers-reduced-motion:reduce){
+    .reveal .word{animation:none;opacity:1;transform:none}
+    .cue i{animation:none}
+    *{transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+  <section class="hero">
+    <div id="map" aria-hidden="true"></div>
+    <div class="scrim"></div>
+    <div class="scrim-edge"></div>
+
+    <header class="topbar">
+      <span class="mark"><span class="dot"></span>Jakarta</span>
+      <nav>
+        <a href="#" class="active">Cerita</a>
+        <a href="#">Galeri</a>
+        <a href="#">Jelajah</a>
+      </nav>
+    </header>
+
+    <div class="content">
+      <div class="eyebrow-row">
+        <span class="bar"></span>
+        <span class="eyebrow">WebGIS storytelling · 5 kota administrasi</span>
+      </div>
+
+      <h1 class="rise-block" id="h1">Jakarta</h1>
+      <p class="subtitle reveal" id="sub">Lima wajah, satu kota</p>
+      <p class="lede">DKI Jakarta terbagi menjadi lima kota administrasi daratan. Masing-masing punya denyutnya sendiri: bisnis, kampus, hiburan, pelabuhan, dan pabrik.</p>
+
+      <div class="actions">
+        <button class="btn btn-primary"><i class="ph ph-compass"></i> Mulai menjelajah</button>
+        <button class="btn btn-ghost"><i class="ph ph-map-trifold"></i> Buka peta</button>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="tile"><div class="num" data-to="5">0</div><div class="label">Kota administrasi</div></div>
+        <div class="tile"><div class="num" data-to="44">0</div><div class="label">Kecamatan</div></div>
+        <div class="tile"><div class="num" data-to="267">0</div><div class="label">Kelurahan</div></div>
+        <div class="tile"><div class="num" data-to="662"><span>0</span><span class="unit">km²</span></div><div class="label">Luas daratan</div></div>
+      </div>
+      <div class="stats-src"><i class="ph ph-database"></i> Agregat atribut layer GeoServer — bukan data baru</div>
+    </div>
+
+    <div class="cue"><i class="ph ph-arrow-down"></i> Scroll untuk memulai</div>
+  </section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script>
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // word-by-word reveal
+  function splitReveal(el, startDelay){
+    const words = el.textContent.split(" ");
+    el.textContent = "";
+    words.forEach((w,i)=>{
+      const s=document.createElement("span");
+      s.className="word"; s.textContent=w;
+      s.style.animationDelay=(startDelay + i*0.07)+"s";
+      el.appendChild(s);
+      el.appendChild(document.createTextNode(" "));
+    });
+  }
+  splitReveal(document.getElementById("sub"), 0.35);
+
+  // count-up stat tiles
+  function countUp(node){
+    const to = +node.dataset.to;
+    const target = node.querySelector("span:not(.unit)") || node.firstChild;
+    if(reduced){ if(node.querySelector("span:not(.unit)")) target.textContent=to; else node.childNodes[0].nodeValue=to; return; }
+    const t0=performance.now(), dur=1100;
+    function tick(now){
+      const p=Math.min(1,(now-t0)/dur);
+      const e=1-Math.pow(1-p,3); // easeOutCubic
+      const val=Math.round(to*e);
+      if(node.querySelector(".unit")) node.querySelector("span:not(.unit)").textContent=val;
+      else node.childNodes[0].nodeValue=val;
+      if(p<1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const io=new IntersectionObserver((ents)=>{
+    ents.forEach(e=>{ if(e.isIntersecting){ countUp(e.target); io.unobserve(e.target);} });
+  },{threshold:.4});
+  document.querySelectorAll("#stats .num").forEach(n=>io.observe(n));
+
+  // living map — OSM basemap only (no PostGIS/GeoServer data here), slow drift
+  try{
+    const map=new maplibregl.Map({
+      container:"map",
+      style:{version:8,
+        sources:{osm:{type:"raster",tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png","https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256,attribution:"© OpenStreetMap"}},
+        layers:[{id:"osm",type:"raster",source:"osm"}]},
+      center:[106.845,-6.208], zoom:11.2, pitch:0, bearing:-12,
+      interactive:false, attributionControl:true
+    });
+    if(!reduced){
+      map.on("load",()=>{
+        let b=-12;
+        setInterval(()=>{ b+=0.02; map.setBearing(b); }, 60);
+      });
+    }
+  }catch(err){ /* fallback: dark background already set */ }
+</script>
+</body>
+</html>
