@@ -9,75 +9,78 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#0D1117}
-a{color:#2DD4BF}a:hover{color:#5EEAD4}
+body{margin:0;background:#181818}
+a{color:#E0A458}a:hover{color:#F0C084}
 button{font:inherit;color:inherit;cursor:pointer}
-button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
-.card{animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards;transition:opacity .35s ease,border-color .25s ease,transform .25s ease}
+button:focus-visible{outline:2px solid #E0A458;outline-offset:2px}
+.card{animation:rise .6s cubic-bezier(0.22,1,0.36,1) backwards;transition:opacity .35s ease,border-color .25s ease,transform .3s cubic-bezier(0.22,1,0.36,1)}
 .card:hover{transform:translateY(-3px)}
-.tab{transition:background .2s ease,color .2s ease}
+.tab{transition:background .3s ease,color .3s ease}
 .pulse{animation:pulse 1.8s ease-in-out infinite}
-.slide{animation:slide .5s cubic-bezier(.2,.7,.2,1) backwards}
-.bar{animation:grow 1.2s cubic-bezier(.2,.7,.2,1) backwards}
+.bar{animation:grow 1.2s cubic-bezier(0.22,1,0.36,1) backwards}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}}
-@keyframes slide{from{opacity:0;transform:translateX(24px)}}
 @keyframes grow{from{transform:scaleX(0)}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,212,191,.55)}50%{box-shadow:0 0 0 8px rgba(45,212,191,0)}}
-@media (prefers-reduced-motion: reduce){.card,.slide,.bar,.pulse{animation:none}.card:hover{transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,164,88,.5)}50%{box-shadow:0 0 0 8px rgba(224,164,88,0)}}
+@media (prefers-reduced-motion: reduce){.card,.bar,.pulse{animation:none}.card:hover{transform:none}}
 </style>
 </helmet>
-<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 32px; background: #0D1117; color: #E6EDF3; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="width: 1440px; height: 980px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 32px; background: #181818; color: #FFFFFF; font-family: 'Manrope', system-ui, sans-serif">
   <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 32px">
     <div style="display: flex; flex-direction: column; gap: 10px">
-      <div style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.08em; color: #8B949E">
-        <span class="pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #2DD4BF; display: inline-block"></span>
+      <div style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #8A8A8A">
+        <span class="pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #E0A458; display: inline-block"></span>
         <span>JAKARTA — LIMA WAJAH SATU KOTA · WEBGIS STORYTELLING</span>
       </div>
-      <h1 style="margin: 0; font-size: 56px; line-height: 60px; font-weight: 700; letter-spacing: -0.02em">Tech Stack</h1>
-      <p style="margin: 0; font-size: 17px; color: #8B949E; max-width: 640px">Frontend statis yang siap pindah ke backend geospasial open-source tanpa mengubah kode aplikasi.</p>
+      <h1 style="margin: 0; font-size: 56px; line-height: 60px; font-weight: 700; letter-spacing: -0.03em">Tech Stack</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 26px; color: #B5B5B5; max-width: 640px">Frontend statis di CDN yang membaca data geospasial live dari backend open-source. Aplikasinya tidak butuh server; datanya yang butuh.</p>
+      <div style="display: flex; gap: 20px; font-size: 13px; color: #8A8A8A">
+        <span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #E0A458"></span>Di repo hari ini</span>
+        <span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; border: 1px dashed #8A8A8A; box-sizing: border-box"></span>Direncanakan (backend live)</span>
+      </div>
     </div>
-    <div role="tablist" aria-label="Filter layer" style="display: flex; gap: 6px; padding: 6px; background: #161B22; border: 1px solid #30363D; border-radius: 14px">
-      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
-        <button class="tab" role="tab" aria-selected="{{t.active}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; background: {{t.bg}}; color: {{t.fg}}">
-          <span style="width: 8px; height: 8px; border-radius: 2px; background: {{t.color}}"></span>{{t.label}}
-        </button>
+    <div role="tablist" aria-label="Filter layer" style="display: flex; gap: 4px; padding: 6px; background: #1F1F1F; border: 1px solid rgba(255,255,255,0.09); border-radius: 9999px">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+        <button class="tab" role="tab" aria-selected="{{t.active}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 9999px; font-size: 14px; font-weight: 500; background: {{t.bg}}; color: {{t.fg}}">{{t.label}}</button>
       </sc-for>
     </div>
   </div>
 
   <div style="display: flex; gap: 32px; flex: 1; min-height: 0">
-    <div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 96px; gap: 12px; align-content: start">
-      <sc-for list="{{items}}" as="item" hint-placeholder-count="13">
-        <button class="card" onClick="{{item.pick}}" aria-pressed="{{item.selected}}" style="animation-delay: {{item.delay}}; opacity: {{item.op}}; border: 1px solid {{item.ring}}; background: {{item.bg}}; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px; text-align: left">
-          <span style="flex: none; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 15px; background: {{item.tint}}; color: {{item.color}}">{{item.mono}}</span>
-          <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
-            <span style="font-size: 17px; font-weight: 600">{{item.name}}</span>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B949E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{item.ver}}</span>
+    <div style="flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 84px; gap: 12px; align-content: start">
+      <sc-for list="{{items}}" as="item" hint-placeholder-count="20">
+        <button class="card" onClick="{{item.pick}}" aria-pressed="{{item.selected}}" style="animation-delay: {{item.delay}}; opacity: {{item.op}}; border: 1px {{item.borderStyle}} {{item.ring}}; background: {{item.bg}}; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; text-align: left; min-width: 0">
+          <span style="flex: none; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 13px; background: {{item.tint}}; color: {{item.color}}">{{item.mono}}</span>
+          <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+            <span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{item.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8A8A8A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{item.ver}}</span>
           </span>
         </button>
       </sc-for>
     </div>
 
-    <aside aria-live="polite" style="width: 400px; flex: none; box-sizing: border-box; padding: 28px; background: #161B22; border: 1px solid #30363D; border-radius: 18px; display: flex; flex-direction: column; gap: 20px">
+    <aside aria-live="polite" style="width: 380px; flex: none; box-sizing: border-box; padding: 28px; background: #1F1F1F; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; display: flex; flex-direction: column; gap: 20px">
       <div style="display: flex; align-items: center; gap: 16px">
-        <span style="width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; background: {{cur.tint}}; color: {{cur.color}}">{{cur.mono}}</span>
+        <span style="flex: none; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; background: {{cur.tint}}; color: {{cur.color}}">{{cur.mono}}</span>
         <div style="display: flex; flex-direction: column; gap: 6px">
-          <span style="font-size: 26px; font-weight: 700; line-height: 30px">{{cur.name}}</span>
-          <span style="align-self: flex-start; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 8px; border-radius: 6px; background: {{cur.tint}}; color: {{cur.color}}">{{cur.layerName}}</span>
+          <span style="font-size: 24px; font-weight: 700; line-height: 30px">{{cur.name}}</span>
+          <span style="display: flex; gap: 6px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.09); color: #B5B5B5">{{cur.layerName}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 9999px; border: 1px {{cur.badgeBorder}} {{cur.badgeLine}}; background: {{cur.badgeBg}}; color: {{cur.badgeFg}}">{{cur.status}}</span>
+          </span>
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #8B949E">PERAN</span>
-        <span style="font-size: 17px; line-height: 24px">{{cur.role}}</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #8A8A8A">PERAN</span>
+        <span style="font-size: 16px; line-height: 24px">{{cur.role}}</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #8B949E">KENAPA DIPILIH</span>
-        <span style="font-size: 15px; line-height: 23px; color: #C9D1D9">{{cur.why}}</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #8A8A8A">KENAPA DIPILIH</span>
+        <span style="font-size: 15px; line-height: 23px; color: #B5B5B5">{{cur.why}}</span>
       </div>
-      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid #30363D">
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #8B949E">DI REPO</span>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.09)">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #8A8A8A">{{cur.whereLabel}}</span>
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: {{cur.color}}">{{cur.where}}</span>
       </div>
     </aside>
@@ -85,12 +88,12 @@ button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
 
   <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
     <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
-      <div class="card" style="animation-delay: {{s.delay}}; padding: 16px 20px; background: #161B22; border: 1px solid #21262D; border-radius: 14px; display: flex; flex-direction: column; gap: 10px">
+      <div class="card" style="animation-delay: {{s.delay}}; padding: 16px 20px; background: #1F1F1F; border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; display: flex; flex-direction: column; gap: 10px">
         <div style="display: flex; align-items: baseline; gap: 10px">
-          <span style="font-size: 28px; font-weight: 700">{{s.value}}</span>
-          <span style="font-size: 14px; color: #8B949E">{{s.label}}</span>
+          <span style="font-size: 28px; font-weight: 700; letter-spacing: -0.02em">{{s.value}}</span>
+          <span style="font-size: 14px; color: #8A8A8A">{{s.label}}</span>
         </div>
-        <div style="height: 4px; border-radius: 2px; background: #21262D; overflow: hidden">
+        <div style="height: 4px; border-radius: 2px; background: #313131; overflow: hidden">
           <div class="bar" style="height: 4px; transform-origin: left; animation-delay: {{s.delay}}; width: {{s.pct}}; background: {{s.color}}"></div>
         </div>
       </div>
@@ -98,74 +101,83 @@ button:focus-visible{outline:2px solid #2DD4BF;outline-offset:2px}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
-var LAYERS = {
-  fe: { name: 'Frontend', color: '#2DD4BF', tint: 'rgba(45,212,191,0.12)' },
-  be: { name: 'Backend produksi', color: '#60A5FA', tint: 'rgba(96,165,250,0.12)' },
-  data: { name: 'Data', color: '#FBBF24', tint: 'rgba(251,191,36,0.12)' },
-  ops: { name: 'Deploy & QA', color: '#C4B5FD', tint: 'rgba(196,181,253,0.12)' }
-};
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+var LAYERS = { fe: 'Frontend statis', be: 'Backend live', au: 'Authoring', data: 'Data pipeline', ops: 'Delivery & QA' };
 var ITEMS = [
-  { id: 'nextjs', mono: 'NX', name: 'Next.js 14', ver: 'App Router · output: export', layer: 'fe', role: 'Kerangka aplikasi dan static export ke ./out.', why: 'Tanpa server: build sekali, dilayani dari CDN. App Router menampung StoryApp, Scroller, Chapter dan ExplorePanel.', where: 'app/ · next.config.mjs' },
-  { id: 'ts', mono: 'TS', name: 'TypeScript', ver: 'narasi bertipe', layer: 'fe', role: 'Tipe untuk model chapter dan kamera.', why: 'Narasi adalah data: chapters.ts dan mapViews.ts bertipe, jadi id distrik atau koordinat yang salah ketahuan saat build.', where: 'lib/ · types/' },
-  { id: 'maplibre', mono: 'ML', name: 'MapLibre GL JS 4', ver: 'WebGL vector map', layer: 'fe', role: 'Peta: kamera, layer, highlight distrik, hover tooltip.', why: 'Open-source. Abstraksi source-nya membuat layer membaca /data/*.geojson atau endpoint GeoServer cukup dengan ganti URL.', where: 'components/MapCanvas · lib/mapLayers.ts' },
-  { id: 'scrollama', mono: 'SC', name: 'Scrollama 3', ver: 'scroll-driven trigger', layer: 'fe', role: 'Memicu chapter saat panel masuk viewport.', why: 'Ringan, berbasis IntersectionObserver. Tiap panel memicu flyTo kamera, highlight batas, dan reveal landmark.', where: 'lib/useScrollChapter' },
-  { id: 'maptiler', mono: 'MT', name: 'MapTiler', ver: 'dataviz-dark · OSM fallback', layer: 'fe', role: 'Basemap vektor; layer cerita disisipkan di bawah label.', why: 'Key dibatasi domain memberi SLA. Tanpa key, aplikasi turun ke tile OSM raster yang digelapkan untuk dev lokal.', where: 'lib/basemap.ts' },
-  { id: 'postgis', mono: 'PG', name: 'PostGIS', ver: 'EPSG:4326', layer: 'be', role: 'Penyimpanan spasial: batas, landmark, sel kemacetan.', why: 'Query spasial di server dan satu sumber kebenaran untuk data yang berubah, seperti lalu lintas live.', where: 'docs/architecture.md §6' },
-  { id: 'geoserver', mono: 'GS', name: 'GeoServer', ver: 'WFS · WMTS · GeoWebCache', layer: 'be', role: 'Menyajikan layer sebagai layanan OGC.', why: 'Styling terpusat dan tiling. WFS GeoJSON langsung terbaca oleh source MapLibre.', where: 'docs/architecture.md §6' },
-  { id: 'qgis', mono: 'QG', name: 'QGIS', ver: 'authoring desktop', layer: 'be', role: 'Editing dan styling data.', why: 'Edit langsung ke PostGIS; gaya layer bisa dipublikasikan ke GeoServer.', where: 'docs/architecture.md §6' },
-  { id: 'gadm', mono: 'GA', name: 'GADM 4.1', ver: 'ADM2 · JakartaRaya', layer: 'data', role: 'Batas lima kota administrasi.', why: 'Difilter ke NAME_1 = JakartaRaya, koordinat dibulatkan ~1 m menjadi ~13 KB. Lisensi non-komersial; geoBoundaries untuk build publik.', where: 'scripts/build-districts.mjs' },
-  { id: 'mapshaper', mono: 'MS', name: 'mapshaper', ver: 'simplifikasi geometri', layer: 'data', role: 'Memangkas ukuran batas wilayah.', why: 'Geometri ringan berarti muat cepat lewat CDN, termasuk di ponsel.', where: 'pipeline data' },
-  { id: 'ngeohash', mono: 'GH', name: 'ngeohash', ver: 'geohash presisi 7', layer: 'data', role: 'Sel kemacetan Jalan Sudirman.', why: 'Sampel garis tengah Sudirman dienkode ke sel ~150 m; tiap sel jadi poligon merah berstatus macet.', where: 'scripts/build-congestion.mjs' },
-  { id: 'vercel', mono: 'VC', name: 'Vercel', ver: 'Edge CDN', layer: 'ops', role: 'Hosting static export.', why: 'Preset Next.js mendeteksi output: export otomatis. NEXT_PUBLIC_* di-inline saat build.', where: 'Settings → Environment Variables' },
-  { id: 'vitest', mono: 'VT', name: 'Vitest', ver: '+ Testing Library · 60 tes', layer: 'ops', role: 'Unit test model dan komponen.', why: 'Menguji model chapter, kamera dan komponen dengan cepat tanpa browser sungguhan.', where: 'tests/ · vitest.config.ts' }
+  { id: 'nextjs', mono: 'NX', name: 'Next.js 14', ver: 'App Router · output: export', layer: 'fe', live: true, role: 'Static export ke out/; tanpa SSR atau serverless, di POC maupun mode live.', why: 'Cerita sama untuk setiap pengunjung, jadi aplikasinya cukup statis di CDN. Hanya tier data yang butuh server.', where: 'app/ · next.config.mjs' },
+  { id: 'ts', mono: 'TS', name: 'TypeScript', ver: 'narasi bertipe', layer: 'fe', live: true, role: 'Tipe untuk model chapter dan kamera.', why: 'Narasi adalah data: id distrik atau koordinat yang salah ketahuan saat build, bukan di depan pengunjung.', where: 'lib/ · types/' },
+  { id: 'maplibre', mono: 'ML', name: 'MapLibre GL JS 4', ver: 'WebGL vector map', layer: 'fe', live: true, role: 'Kamera, highlight distrik, hover tooltip, landmark.', why: 'Open-source tanpa token. Abstraksi source-nya membaca GeoServer atau snapshot bawaan cukup dengan ganti URL.', where: 'components/MapCanvas.tsx · lib/mapLayers.ts' },
+  { id: 'scrollama', mono: 'SC', name: 'Scrollama 3', ver: 'scroll-driven trigger', layer: 'fe', live: true, role: 'Memicu chapter saat panel masuk viewport.', why: 'Ringan, berbasis IntersectionObserver; tiap panel memicu flyTo kamera, highlight batas, dan landmark.', where: 'components/v2/ScrollerV2.tsx' },
+  { id: 'maptiler', mono: 'MT', name: 'MapTiler', ver: 'dataviz-dark · OSM fallback', layer: 'fe', live: true, role: 'Basemap vektor dengan key dibatasi domain.', why: 'Key memberi SLA; tanpa key aplikasi turun ke raster OSM yang digelapkan untuk dev lokal.', where: 'lib/basemap.ts' },
+  { id: 'v2', mono: 'DS', name: 'Design system v2', ver: 'Manrope · token gelap', layer: 'fe', live: true, role: 'Satu bahasa visual untuk cerita, galeri, dan jelajah.', why: 'Manrope lewat next/font, permukaan gelap datar, satu aksen hangat, spacing/radius skala Tailwind. Tanpa framework CSS.', where: 'app/v2/v2.css · components/v2/' },
+  { id: 'postgis', mono: 'PG', name: 'PostGIS', ver: 'EPSG:4326 · GiST', layer: 'be', live: false, role: 'Sumber kebenaran tunggal untuk batas distrik dan landmark.', why: 'Query spasial di server; GeoServer dan CI membacanya dengan role read-only.', where: 'architecture.md §6' },
+  { id: 'geoserver', mono: 'GS', name: 'GeoServer', ver: 'WFS · WMTS · SLD', layer: 'be', live: false, role: 'API data yang dipanggil aplikasi statis dari browser.', why: 'Standar OGC: WFS GeoJSON langsung terbaca source MapLibre; styling terpusat.', where: 'architecture.md §6' },
+  { id: 'gwc', mono: 'GW', name: 'GeoWebCache', ver: 'tile cache', layer: 'be', live: false, role: 'Pre-render layer berat atau jarang berubah.', why: 'Tile yang sudah di-cache tidak di-query ulang per tampilan.', where: 'di dalam GeoServer' },
+  { id: 'nginx', mono: 'NG', name: 'nginx gateway', ver: 'TLS · rate limit · cache', layer: 'be', live: false, role: 'Pintu depan GeoServer, hanya dijangkau lewat rewrite /geo/*.', why: 'Admin GeoServer tidak pernah publik; cache respons mengurangi beban.', where: 'architecture.md §6.5' },
+  { id: 'docker', mono: 'DC', name: 'Docker Compose', ver: 'postgis · geoserver · nginx', layer: 'be', live: false, role: 'Menjalankan backend secara reproducible.', why: 'Sama di laptop dan VM. Alternatif terkelola: RDS / Cloud SQL + kontainer GeoServer.', where: 'architecture.md §8' },
+  { id: 'qgis', mono: 'QG', name: 'QGIS Desktop', ver: 'SLD / QML', layer: 'au', live: false, role: 'Edit geometri dan atribut langsung di PostGIS; analisis spasial.', why: 'Gratis, kuat untuk kartografi, dan bisa menerbitkan gaya ke GeoServer. Dipakai analis, tidak dipanggil aplikasi.', where: 'architecture.md §6.1' },
+  { id: 'gadm', mono: 'GA', name: 'GADM 4.1', ver: 'ADM2 · JakartaRaya', layer: 'data', live: true, role: 'Batas lima kota administrasi.', why: 'Hari ini mengisi snapshot langsung; saat live jadi seed PostGIS sekali. Lisensi non-komersial, geoBoundaries untuk build publik.', where: 'scripts/build-districts.mjs' },
+  { id: 'mapshaper', mono: 'MS', name: 'mapshaper', ver: 'simplifikasi · ~13 KB', layer: 'data', live: true, role: 'Memangkas ukuran geometri batas wilayah.', why: 'Geometri ringan berarti muat cepat lewat CDN, termasuk di ponsel.', where: 'district build' },
+  { id: 'gdal', mono: 'OG', name: 'GDAL / ogr2ogr', ver: 'PostGIS → GeoJSON', layer: 'data', live: false, role: 'Ekspor snapshot GeoJSON dari PostGIS sebelum next build.', why: 'Fallback selalu salinan data live, bukan dataset kedua yang bisa melenceng.', where: 'langkah CI · architecture.md §6.6' },
+  { id: 'etl', mono: 'ET', name: 'Live data ETL', ver: 'upsert ke PostGIS', layer: 'data', live: false, role: 'Memasukkan layer yang sering berubah ke PostGIS.', why: 'Data live masuk satu pintu, lalu tersaji lewat GeoServer tanpa deploy ulang frontend.', where: 'roadmap v3' },
+  { id: 'vercel', mono: 'VC', name: 'Vercel', ver: 'Edge CDN', layer: 'ops', live: true, role: 'Hosting aplikasi statis dan snapshot; satu origin untuk browser.', why: 'Git integration membangun setiap push dengan preview PR. NEXT_PUBLIC_* di-inline saat build.', where: 'jkt-webgis-catalyze.vercel.app' },
+  { id: 'rewrite', mono: 'RW', name: 'Rewrite /geo/*', ver: 'vercel.json', layer: 'ops', live: false, role: 'Meneruskan request data live ke gateway.', why: 'Satu domain, tanpa CORS, alamat GeoServer tersembunyi.', where: 'vercel.json' },
+  { id: 'github', mono: 'GH', name: 'GitHub', ver: 'source · PR preview', layer: 'ops', live: true, role: 'Repositori dan alur review.', why: 'Setiap PR mendapat URL preview dari Vercel.', where: 'feature branch → main' },
+  { id: 'vitest', mono: 'VT', name: 'Vitest', ver: 'Testing Library · 49 tes', layer: 'ops', live: true, role: 'Unit test model chapter/kamera, helper paint, komponen.', why: 'Cepat dan tanpa browser sungguhan (jsdom).', where: 'tests/ · vitest.config.ts' }
 ];
-var TABS = [
-  { id: 'all', label: 'Semua', color: '#E6EDF3' },
-  { id: 'fe', label: 'Frontend', color: LAYERS.fe.color },
-  { id: 'be', label: 'Backend', color: LAYERS.be.color },
-  { id: 'data', label: 'Data', color: LAYERS.data.color },
-  { id: 'ops', label: 'Deploy & QA', color: LAYERS.ops.color }
-];
+var ACCENT = '#E0A458';
 class Component extends DCLogic {
   renderVals() {
     var self = this;
     var f = this.state.filter || 'all';
     var sel = this.state.sel || 'maplibre';
     var items = ITEMS.map(function (it, i) {
-      var L = LAYERS[it.layer];
-      var on = f === 'all' || f === it.layer;
       var picked = it.id === sel;
       return Object.assign({}, it, {
-        color: L.color, tint: L.tint, layerName: L.name,
-        delay: (i * 55) + 'ms',
-        op: on ? 1 : 0.18,
+        delay: (i * 40) + 'ms',
+        op: f === 'all' || f === it.layer ? 1 : 0.16,
         selected: picked ? 'true' : 'false',
-        ring: picked ? L.color : '#21262D',
-        bg: picked ? '#1C2330' : '#161B22',
+        borderStyle: picked || it.live ? 'solid' : 'dashed',
+        ring: picked ? ACCENT : (it.live ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.16)'),
+        bg: picked ? '#272727' : (it.live ? '#1F1F1F' : 'transparent'),
+        tint: it.live ? 'rgba(224,164,88,0.14)' : '#313131',
+        color: it.live ? ACCENT : '#B5B5B5',
         pick: function () { self.setState({ sel: it.id }); }
       });
     });
     var c = ITEMS.filter(function (it) { return it.id === sel; })[0];
-    var CL = LAYERS[c.layer];
-    var tabs = TABS.map(function (t) {
-      var a = t.id === f;
-      return Object.assign({}, t, {
+    var tabIds = ['all', 'fe', 'be', 'au', 'data', 'ops'];
+    var tabs = tabIds.map(function (id) {
+      var a = id === f;
+      return {
+        label: id === 'all' ? 'Semua' : LAYERS[id],
         active: a ? 'true' : 'false',
-        bg: a ? '#2D333B' : 'transparent',
-        fg: a ? '#E6EDF3' : '#8B949E',
-        pick: function () { self.setState({ filter: t.id }); }
-      });
+        bg: a ? ACCENT : 'transparent',
+        fg: a ? '#1a1206' : '#8A8A8A',
+        pick: function () { self.setState({ filter: id }); }
+      };
     });
+    var live = ITEMS.filter(function (it) { return it.live; }).length;
+    var total = ITEMS.length;
     var stats = [
-      { value: '13', label: 'teknologi', pct: '100%', color: '#2DD4BF', delay: '700ms' },
-      { value: '60', label: 'unit test', pct: '80%', color: '#C4B5FD', delay: '780ms' },
-      { value: '~13 KB', label: 'batas wilayah', pct: '30%', color: '#FBBF24', delay: '860ms' },
-      { value: '5', label: 'chapter cerita', pct: '62%', color: '#60A5FA', delay: '940ms' }
+      { value: String(total), label: 'teknologi', pct: '100%', color: ACCENT, delay: '800ms' },
+      { value: String(live), label: 'di repo hari ini', pct: Math.round(live / total * 100) + '%', color: ACCENT, delay: '880ms' },
+      { value: String(total - live), label: 'direncanakan', pct: Math.round((total - live) / total * 100) + '%', color: '#8A8A8A', delay: '960ms' },
+      { value: '49', label: 'unit test', pct: '70%', color: ACCENT, delay: '1040ms' }
     ];
     return {
       items: items, tabs: tabs, stats: stats,
-      cur: Object.assign({}, c, { color: CL.color, tint: CL.tint, layerName: CL.name })
+      cur: Object.assign({}, c, {
+        layerName: LAYERS[c.layer],
+        tint: c.live ? 'rgba(224,164,88,0.14)' : '#313131',
+        color: c.live ? ACCENT : '#B5B5B5',
+        status: c.live ? 'Di repo' : 'Direncanakan',
+        badgeBg: c.live ? ACCENT : 'transparent',
+        badgeFg: c.live ? '#1a1206' : '#B5B5B5',
+        badgeBorder: c.live ? 'solid' : 'dashed',
+        badgeLine: c.live ? ACCENT : '#8A8A8A',
+        whereLabel: c.live ? 'DI REPO' : 'DIDESAIN DI'
+      })
     };
   }
 }
