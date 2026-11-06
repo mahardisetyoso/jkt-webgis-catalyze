@@ -73,11 +73,11 @@ The browser talks to **one origin, Vercel**: it serves the **app** (HTML/JS, plu
 flowchart TB
     subgraph browser[Browser runtime]
         direction TB
-        story[StoryApp<br/>state: activeChapter, view, reducedMotion]
-        nav[ModeNav<br/>Cerita · Galeri · Jelajahi]
-        scroller[Scroller<br/>Scrollama wrapper]
-        chapter[Chapter × N<br/>title · subtitle · photos]
-        dots[ChapterDots<br/>progress nav]
+        story[StoryAppV2<br/>state: activeChapter, view, reducedMotion]
+        nav[NavV2<br/>Cerita · Galeri · Jelajah]
+        scroller[ScrollerV2<br/>Scrollama wrapper]
+        chapter[ChapterV2 × N<br/>hero · district · outro]
+        dots[chapter dots<br/>progress nav · inline]
         map[MapCanvas<br/>MapLibre GL instance]
         explore[ExplorePanel<br/>layer toggles · free pan/zoom]
         gallery[GalleryGrid<br/>photo grid]
@@ -118,17 +118,24 @@ flowchart TB
 
 ### Component responsibilities
 
+> **Redesign (shipped UI).** The page-level components live in `components/v2/`
+> with a scoped design system in `app/v2/v2.css` (Manrope type, flat dark tokens,
+> one warm accent, `cubic-bezier(0.22,1,0.36,1)` motion). The map/data components
+> (`MapCanvas`, `GalleryGrid`, `Lightbox`, `ExplorePanel`) are reused unchanged;
+> the chapter-dot navigator is now inline in `StoryAppV2`. Names below are current
+> (StoryApp → StoryAppV2, ModeNav → NavV2, Scroller → ScrollerV2, Chapter → ChapterV2).
+
 | Component | Responsibility | Key interface |
 |-----------|----------------|---------------|
-| `StoryApp` | Hold `activeChapter` + `view` (`story`/`gallery`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map, own the gallery lightbox index | `activeDistrictId`, `view`, `mode`, `showAllLandmarks` → `MapCanvas` |
-| `ModeNav` | Persistent header nav switching the three modes | `{view, onChange}` |
-| `Scroller` | Fire `onChapter(index)` as panels enter viewport (Scrollama) | `{chapters, onChapter, active}` |
-| `Chapter` | Render one narrative panel (kicker/theme, title, subtitle, body, one or two photos) | `{chapter, index, active}` |
-| `ChapterDots` | Progress-dot navigator down the side; jump to a chapter | `{chapters, active, onSelect}` |
+| `StoryAppV2` | Hold `activeChapter` + `view` (`story`/`gallery`/`explore`) state, detect `prefers-reduced-motion`, wire scroll → map, own the gallery lightbox index and the inline chapter-dots | `activeDistrictId`, `view`, `mode`, `showAllLandmarks` → `MapCanvas` |
+| `NavV2` | Persistent floating nav switching the three modes | `{view, onChange}` |
+| `ScrollerV2` | Fire `onChapter(index)` as panels enter viewport (Scrollama) | `{chapters, onChapter, active, onExplore}` |
+| `ChapterV2` | Render one narrative panel — hero (gradient heading + stat tiles), district (kicker/theme, title, subtitle, body, photos), or outro (CTA) | `{chapter, index, active, onExplore}` |
 | `MapCanvas` | Own the MapLibre map; highlight active district, hover-highlight, fly camera, show landmarks; enable interaction in explore mode | `{activeDistrictId, view, mode, showAllLandmarks, reducedMotion}` |
 | `ExplorePanel` | Render layer toggles shown in explore mode | `{layers, onToggle}` |
 | `GalleryGrid` | Photo grid of all chapter photos (tile = thumbnail + caption + district accent) | `{items, onOpen}` |
 | `Lightbox` | Enlarged photo overlay with prev/next/close + keyboard | `{items, index, onClose, onIndex}` |
+| `app/v2/v2.css` | Scoped design system — Manrope type, flat dark surfaces, one accent, Tailwind-scale spacing/radius, base motion curve | applied under `.v2-root` |
 | `lib/mapLayers.ts` | Pure styling/geometry helpers (testable without WebGL) | `districtFillPaint`, `districtColorExpr`, `landmarkFilter`, `districtIdFilter`, `cameraMove`, `cameraPadding`, `mapInteractive` |
 | `lib/basemap.ts` | Pick MapTiler vector (keyed) or OSM raster basemap | reads `NEXT_PUBLIC_MAPTILER_*` |
 
@@ -155,7 +162,7 @@ sequenceDiagram
 ```
 
 - **Rendering model:** Next.js static export (`output: 'export'`). Pages are prerendered HTML; the story runs client-side. No SSR/serverless at runtime — in live mode the browser fetches geodata from GeoServer itself (§6.4).
-- **Map as a sticky background:** the map container is `position: sticky; top: 0; height: 100vh`; narrative panels scroll over it. One persistent MapLibre instance — never re-created per chapter.
+- **Map as a fixed background:** the map container is `position: fixed; inset: 0` (z-index 0); narrative panels scroll over it. One persistent MapLibre instance — never re-created per chapter.
 - **State:** a single source of truth (`activeChapter` index in `StoryApp`). Derived values (district id, camera view) flow down as props. No global store needed at POC scale.
 - **Camera choreography:** each chapter maps to a named view preset (center + zoom), mirroring the reference's `views: {default, arctic, lancaster}`. The map animates between presets; it does not compute geometry centroids at runtime (avoids drift toward offshore polygons — see §9).
 

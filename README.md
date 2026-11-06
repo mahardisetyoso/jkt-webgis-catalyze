@@ -57,7 +57,7 @@ This repository runs that frontend in **snapshot-only mode**: the backend is not
 up yet, so the snapshot is seeded by build scripts from GADM and sample data.
 
 The app behaves identically in both modes: a single full-viewport MapLibre map
-sits sticky behind scrolling narrative panels; **Scrollama** fires a chapter change as
+sits fixed behind scrolling narrative panels; **Scrollama** fires a chapter change as
 each panel enters view, flying the camera to that district, highlighting its boundary
 (dimming the others), and revealing its landmarks. After the last chapter an **explore
 mode** unlocks free pan/zoom with layer toggles. A persistent **three-mode nav** (Cerita · Galeri · Jelajahi)
@@ -144,10 +144,12 @@ QA, analytics): ~3–4 weeks.
 - Landmark markers per district, coloured by district
 - **Explore mode** after the story: free pan/zoom + layer toggles
 - **Gallery mode**: grid of all district photos with a lightbox (prev/next/close, keyboard)
-- Persistent **three-mode nav** (Cerita · Galeri · Jelajahi) to switch modes anytime
+- Persistent **three-mode nav** (Cerita · Galeri · Jelajah) to switch modes anytime
+- Dark, flat **design system** — Manrope type, one warm accent, scoped tokens in
+  `app/v2/v2.css`; story, gallery and explore share one visual language (no CSS framework)
 - Respects `prefers-reduced-motion` (instant camera instead of fly)
 - Trilingual-ready content model (currently Bahasa Indonesia)
-- Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 63 unit tests
+- Static frontend, Vercel-ready, designed to read live PostGIS/GeoServer data; 49 unit tests
 
 ## Deploying to Vercel
 
@@ -194,7 +196,8 @@ status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 - **MapLibre GL JS 4** — the interactive WebGL map: camera moves, district highlight, hover tooltip, landmarks.
 - **Scrollama 3** — fires a chapter change as each narrative panel scrolls into view.
 - **MapTiler** — vector basemap (domain-restricted key); darkened OSM raster as the keyless dev fallback.
-- **Vitest + Testing Library** — unit tests (63) for the chapter/camera model, paint helpers, and components.
+- **Design system** — Manrope (a Geist-class typeface, via `next/font`) plus a scoped token set in `app/v2/v2.css`: flat dark surfaces, one warm accent, Tailwind-scale spacing/radius, `cubic-bezier(0.22,1,0.36,1)` motion. No CSS framework.
+- **Vitest + Testing Library** — unit tests (49) for the chapter/camera model, paint helpers, and components.
 - **Vercel** — hosts the static build on its edge CDN; Git-integrated deploys with PR previews.
 
 **Live data backend (designed; not stood up yet — architecture §6)**
@@ -218,16 +221,24 @@ status and config switches: [`docs/tech-stack.md`](docs/tech-stack.md)._
 ## Project structure
 
 ```
-app/            Next.js App Router (layout, page, global CSS)
-components/      MapCanvas, Scroller, Chapter, ChapterDots, StoryApp,
-                 ModeNav, ExplorePanel, GalleryGrid, Lightbox
+app/            Next.js App Router — layout (Manrope + tokens), page (renders
+                 StoryAppV2), globals.css, v2/v2.css (design tokens)
+components/      Shared map UI: MapCanvas, ExplorePanel, GalleryGrid, Lightbox, ModeNav
+components/v2/    Current UI: StoryAppV2, ScrollerV2, ChapterV2, NavV2
 lib/            chapters, mapViews, mapLayers, basemap, useScrollChapter
 scripts/        build-districts / build-images
 public/data/     districts, landmarks GeoJSON
 public/images/   district photos in photos/ (+ CREDITS.md)
+redesign/        standalone HTML section mockups used to design the current UI
 tests/           Vitest suites
 docs/            architecture.md + implementation plan
 ```
+
+> **UI note (redesign):** the shipped interface is a dark, flat redesign. The
+> page-level UI lives in `components/v2/` with a scoped design system in
+> `app/v2/v2.css`; the map and data components (`MapCanvas`, `GalleryGrid`,
+> `Lightbox`, `ExplorePanel`) are reused unchanged. The older story components
+> were removed — history is in git.
 
 ## Credits & license
 

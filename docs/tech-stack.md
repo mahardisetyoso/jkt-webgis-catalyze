@@ -12,11 +12,14 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 
 ## 1. Frontend (static)
 
+> The shipped UI is a dark, flat **redesign**: the page-level components live in `components/v2/` (StoryAppV2, ScrollerV2, ChapterV2, NavV2) with a scoped design system in `app/v2/v2.css`; the map/data components below are reused unchanged.
+
 - **Next.js** (14, App Router, `output: 'export'`) — static export to `out/`; no SSR or serverless, in POC and live mode alike. ✅ `app/`, `next.config.mjs`
 - **TypeScript** — typed narrative and camera config; bad district ids or coordinates fail at build. ✅ `lib/`, `types/`
 - **MapLibre GL JS** (4) — WebGL map: camera, district highlight, hover tooltip, landmarks; its `source` abstraction reads either GeoServer or the bundled snapshot. ✅ `components/MapCanvas.tsx`, `lib/mapLayers.ts`
-- **Scrollama** (3) — fires a chapter change as each panel scrolls into view. ✅ `components/Scroller.tsx`
+- **Scrollama** (3) — fires a chapter change as each panel scrolls into view. ✅ `components/v2/ScrollerV2.tsx`
 - **MapTiler** (`dataviz-dark` style) — vector basemap with a domain-restricted key; darkened OSM raster when no key is set. ✅ `lib/basemap.ts`
+- **Design system** — **Manrope** (a Geist-class typeface, loaded via `next/font`) + a scoped token set: flat dark surfaces, one warm accent, Tailwind-scale spacing/radius, `cubic-bezier(0.22,1,0.36,1)` motion. No CSS framework. ✅ `app/v2/v2.css`, `app/layout.tsx`
 
 ## 2. Live geospatial backend (🔜 architecture §6)
 
@@ -42,7 +45,7 @@ The stack follows one principle (architecture §2): **a static frontend on a CDN
 - **Vercel** (Edge CDN) — hosts the static app and the bundled snapshot; Git integration builds every push; the single origin the browser talks to. ✅
 - **Vercel rewrite** `/geo/*` — forwards live-data requests to the backend gateway so the browser stays on one origin (no CORS). 🔜 `vercel.json`
 - **GitHub** — source; PR previews via Vercel. ✅
-- **Vitest + Testing Library** (jsdom) — unit tests for the chapter/camera model, paint helpers and components (63 tests). ✅ `tests/`, `vitest.config.ts`
+- **Vitest + Testing Library** (jsdom) — unit tests for the chapter/camera model, paint helpers and components (49 tests). ✅ `tests/`, `vitest.config.ts`
 
 ---
 

@@ -1,5 +1,10 @@
 # Redesign sandbox
 
+> **Status: sudah diimplementasikan & live.** Mockup HTML di folder ini dipakai
+> untuk merancang redesign, lalu di-port ke komponen Next.js di `components/v2/`
+> dengan design system di `app/v2/v2.css`. Redesign kini menjadi halaman utama
+> (`/`) di produksi; file di sini disimpan sebagai referensi desain.
+
 Preview visual redesign yang **terisolasi** dari kode aplikasi. Tidak ada file di
 `app/`, `components/`, atau `lib/` yang disentuh sampai sebuah section disetujui
 dan di-port manual ke komponen Next.js.
