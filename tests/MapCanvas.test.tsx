@@ -20,8 +20,8 @@ class FakeMap {
     (this.handlers[event] ??= []).push(cb);
     return this;
   }
-  fire(event: string) {
-    for (const cb of this.handlers[event] ?? []) cb();
+  fire(event: string, arg?: unknown) {
+    for (const cb of this.handlers[event] ?? []) cb(arg);
   }
   addSource() {}
   addLayer() {}
@@ -114,5 +114,57 @@ describe("MapCanvas camera", () => {
       <MapCanvas {...base} reducedMotion activeDistrictId="jakut" view={mapViews.jakut} />,
     );
     expect(map.jumpTo.mock.calls.at(-1)![0].center).toEqual(mapViews.jakut.center);
+  });
+});
+
+describe("MapCanvas status", () => {
+  beforeEach(() => {
+    instances.length = 0;
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  const mount = (onStatus: (s: string) => void) => {
+    render(
+      <MapCanvas {...base} activeDistrictId={null} view={mapViews.overview} onStatus={onStatus} />,
+    );
+    return instances[instances.length - 1];
+  };
+
+  it("reports ready once the map has loaded", () => {
+    const onStatus = vi.fn();
+    mount(onStatus).fire("load");
+    expect(onStatus).toHaveBeenCalledWith("ready");
+  });
+
+  it("reports an error when the style never arrives before load", () => {
+    const onStatus = vi.fn();
+    mount(onStatus).fire("error", { error: new Error("Failed to fetch") });
+    expect(onStatus).toHaveBeenCalledWith("error");
+  });
+
+  it("reports an error when the essential district data fails", () => {
+    const onStatus = vi.fn();
+    const map = mount(onStatus);
+    map.fire("load");
+    map.fire("error", { sourceId: "districts", error: new Error("404") });
+    expect(onStatus).toHaveBeenLastCalledWith("error");
+  });
+
+  it("ignores a basemap tile miss after load", () => {
+    const onStatus = vi.fn();
+    const map = mount(onStatus);
+    map.fire("load");
+    map.fire("error", { sourceId: "basemap", error: new Error("tile 404") });
+    expect(onStatus).toHaveBeenCalledTimes(1);
+    expect(onStatus).toHaveBeenCalledWith("ready");
+  });
+
+  it("reports an error if the map never finishes loading", () => {
+    vi.useFakeTimers();
+    const onStatus = vi.fn();
+    mount(onStatus);
+    vi.advanceTimersByTime(20001);
+    expect(onStatus).toHaveBeenCalledWith("error");
+    vi.useRealTimers();
   });
 });

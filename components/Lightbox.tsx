@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import type { GalleryItem } from "./GalleryGrid";
 
 export default function Lightbox({
@@ -16,12 +16,41 @@ export default function Lightbox({
 }) {
   const n = items.length;
   const item = items[index];
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  // Move focus into the dialog on open and give it back to the opener on close.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    return () => opener?.focus?.();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowRight") onIndex((index + 1) % n);
       else if (e.key === "ArrowLeft") onIndex((index - 1 + n) % n);
+      else if (e.key === "Tab") {
+        // Keep Tab and Shift+Tab inside the dialog.
+        const buttons = Array.from(
+          dialogRef.current?.querySelectorAll<HTMLElement>("button") ?? [],
+        );
+        if (buttons.length === 0) return;
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (!dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -31,6 +60,7 @@ export default function Lightbox({
 
   return (
     <div
+      ref={dialogRef}
       className="lightbox"
       role="dialog"
       aria-modal="true"
@@ -44,7 +74,13 @@ export default function Lightbox({
         <img src={item.src} alt={item.caption} />
         <figcaption>{item.caption}</figcaption>
       </figure>
-      <button type="button" className="lb-btn lb-close" aria-label="Tutup" onClick={onClose}>
+      <button
+        ref={closeRef}
+        type="button"
+        className="lb-btn lb-close"
+        aria-label="Tutup"
+        onClick={onClose}
+      >
         ×
       </button>
       <button
