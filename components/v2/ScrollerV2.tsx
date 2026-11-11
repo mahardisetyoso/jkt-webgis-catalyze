@@ -4,15 +4,17 @@ import { useEffect, useRef } from "react";
 import scrollama from "scrollama";
 import ChapterV2 from "./ChapterV2";
 import type { Chapter as ChapterType } from "@/lib/chapters";
+import type { HeroStats } from "@/lib/dataStats";
 
 type Props = {
   chapters: ChapterType[];
   onChapter: (index: number) => void;
   active?: number;
   onExplore: () => void;
+  stats?: HeroStats;
 };
 
-export default function ScrollerV2({ chapters, onChapter, active = 0, onExplore }: Props) {
+export default function ScrollerV2({ chapters, onChapter, active = 0, onExplore, stats }: Props) {
   const cbRef = useRef(onChapter);
   cbRef.current = onChapter;
 
@@ -39,6 +41,7 @@ export default function ScrollerV2({ chapters, onChapter, active = 0, onExplore 
           index={i}
           active={i === active}
           onExplore={onExplore}
+          stats={stats}
         />
       ))}
     </div>

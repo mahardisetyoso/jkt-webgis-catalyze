@@ -66,6 +66,6 @@ export type Padding = { top: number; bottom: number; left: number; right: number
 export function cameraPadding(width: number, height: number, mode: Mode): Padding {
   if (mode === "explore") return { top: 60, bottom: 20, left: 20, right: 20 };
   if (width <= 720)
-    return { top: 60, bottom: Math.round(height * 0.45), left: 20, right: 20 };
+    return { top: 60, bottom: Math.round(height * 0.55), left: 20, right: 20 };
   return { top: 60, bottom: 40, left: Math.round(Math.min(520, width * 0.42)), right: 40 };
 }

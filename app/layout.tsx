@@ -10,7 +10,7 @@ import "./v2/v2.css";
 const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Jakarta — Lima Wajah Satu Kota",
+  title: "Jakarta: Lima Wajah Satu Kota",
   description:
     "Scrollytelling WebGIS lima kota administrasi DKI Jakarta: bisnis, pendidikan, pop culture, perdagangan, dan industri.",
 };

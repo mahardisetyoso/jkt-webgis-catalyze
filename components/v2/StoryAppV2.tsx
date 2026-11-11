@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import MapCanvas from "../MapCanvas";
+import MapCanvas, { type MapStatus } from "../MapCanvas";
 import ScrollerV2 from "./ScrollerV2";
 import NavV2 from "./NavV2";
 import ExplorePanel from "../ExplorePanel";
@@ -10,6 +10,7 @@ import Lightbox from "../Lightbox";
 import type { ViewMode } from "../ModeNav";
 import { chapters } from "@/lib/chapters";
 import { mapViews } from "@/lib/mapViews";
+import type { HeroStats } from "@/lib/dataStats";
 
 type ExploreLayers = { landmarks: boolean };
 
@@ -22,12 +23,13 @@ const galleryItems: GalleryItem[] = chapters.flatMap((c) =>
   })),
 );
 
-export default function StoryAppV2() {
+export default function StoryAppV2({ stats }: { stats?: HeroStats }) {
   const [active, setActive] = useState(0);
   const [view, setView] = useState<ViewMode>("story");
   const [reduced, setReduced] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [layers, setLayers] = useState<ExploreLayers>({ landmarks: true });
+  const [mapStatus, setMapStatus] = useState<MapStatus>("loading");
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -69,12 +71,27 @@ export default function StoryAppV2() {
       <NavV2 view={view} onChange={setView} />
 
       <div className="v2-map">
-        <MapCanvas {...mapProps} />
+        <MapCanvas {...mapProps} onStatus={setMapStatus} />
       </div>
+
+      {mapStatus === "loading" && (
+        <div className="v2-map-status" role="status">
+          <span className="v2-skeleton" aria-hidden="true" />
+          Memuat peta
+        </div>
+      )}
+      {mapStatus === "error" && (
+        <div className="v2-map-status v2-map-error" role="alert">
+          <p>Peta gagal dimuat. Periksa koneksi internetmu, lalu muat ulang halaman.</p>
+          <button type="button" className="v2-btn v2-btn-primary" onClick={() => window.location.reload()}>
+            Muat ulang
+          </button>
+        </div>
+      )}
 
       {isStory && (
         <>
-          <div className="v2-dots" role="tablist" aria-label="Bab">
+          <nav className="v2-dots" aria-label="Bab">
             {chapters.map((c, i) => (
               <button
                 key={c.id}
@@ -90,18 +107,20 @@ export default function StoryAppV2() {
                 }
               />
             ))}
-          </div>
+          </nav>
           <ScrollerV2
             chapters={chapters}
             onChapter={setActive}
             active={active}
             onExplore={() => setView("explore")}
+            stats={stats}
           />
         </>
       )}
 
       {isExplore && (
         <div className="v2-overlay v2-explore">
+          <h1 className="v2-sr-only">Jelajahi peta</h1>
           <ExplorePanel
             layers={[{ id: "landmarks", label: "Penanda lokasi", visible: layers.landmarks }]}
             onToggle={(id) => setLayers((s) => ({ ...s, [id]: !s[id as keyof ExploreLayers] }))}
@@ -116,10 +135,20 @@ export default function StoryAppV2() {
         <div className="v2-overlay v2-gallery">
           <div className="v2-gallery-head">
             <div className="v2-eyebrow"><span className="v2-bar" />Galeri</div>
-            <h2 className="v2-gallery-title">Landmark lima kota</h2>
-            <p className="v2-gallery-sub">{galleryItems.length} foto · klik untuk memperbesar</p>
+            <h1 className="v2-gallery-title">Landmark lima kota</h1>
+            <p className="v2-gallery-sub">
+              {galleryItems.length > 0
+                ? `${galleryItems.length} foto, klik untuk memperbesar`
+                : "Belum ada foto untuk ditampilkan."}
+            </p>
           </div>
-          <GalleryGrid items={galleryItems} onOpen={setLightbox} />
+          {galleryItems.length > 0 ? (
+            <GalleryGrid items={galleryItems} onOpen={setLightbox} />
+          ) : (
+            <div className="v2-empty" role="status">
+              Foto landmark akan muncul di sini setelah ditambahkan ke setiap bab.
+            </div>
+          )}
           {lightbox !== null && (
             <Lightbox
               items={galleryItems}

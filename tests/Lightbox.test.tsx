@@ -38,3 +38,29 @@ describe("Lightbox", () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+describe("Lightbox focus", () => {
+  it("moves focus into the dialog and returns it to the opener on close", () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    const { unmount } = render(
+      <Lightbox items={items} index={0} onClose={() => {}} onIndex={() => {}} />,
+    );
+    expect(screen.getByRole("button", { name: /tutup/i })).toHaveFocus();
+    unmount();
+    expect(opener).toHaveFocus();
+    opener.remove();
+  });
+
+  it("keeps Tab inside the dialog (wraps from last to first and back)", () => {
+    render(<Lightbox items={items} index={0} onClose={() => {}} onIndex={() => {}} />);
+    const close = screen.getByRole("button", { name: /tutup/i });
+    const next = screen.getByRole("button", { name: /berikutnya/i });
+    next.focus();
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(next).toHaveFocus();
+  });
+});

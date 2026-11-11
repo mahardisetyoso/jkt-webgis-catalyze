@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type { Chapter as ChapterType } from "@/lib/chapters";
+import type { Chapter as ChapterType, Photo } from "@/lib/chapters";
+import type { HeroStats } from "@/lib/dataStats";
 
 type Props = {
   chapter: ChapterType;
   index: number;
   active: boolean;
   onExplore: () => void;
+  stats?: HeroStats;
 };
 
 const PATHS: Record<string, string> = {
@@ -24,12 +26,40 @@ function Icon({ n }: { n: keyof typeof PATHS | string }) {
   );
 }
 
-const STATS = [
-  { to: 5, label: "Kota administrasi" },
-  { to: 44, label: "Kecamatan" },
-  { to: 267, label: "Kelurahan" },
-  { to: 662, label: "Luas daratan", unit: "km²" },
-];
+// Every tile comes from data computed in lib/dataStats.ts (build time, from the
+// same GeoJSON the map loads). No hand-typed numbers.
+function statTiles(stats: HeroStats) {
+  return [
+    { to: stats.districts, label: "Kota administrasi" },
+    { to: stats.landmarks, label: "Landmark di peta" },
+    { to: stats.photos, label: "Foto lokasi" },
+    { to: stats.areaKm2, label: "Luas batas GADM", unit: "km²" },
+  ];
+}
+
+// A photo that fails to load shows its caption instead of an empty box.
+function ChapterPhoto({ photo }: { photo: Photo }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <figure>
+      {failed ? (
+        <div className="v2-photo-fallback" role="img" aria-label={photo.caption}>
+          Foto tidak dapat dimuat. {photo.caption}
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo.src}
+          alt={photo.caption}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          style={{ objectPosition: photo.position ?? "center" }}
+        />
+      )}
+      <figcaption aria-hidden="true">{photo.caption}</figcaption>
+    </figure>
+  );
+}
 
 function CountUp({ to, unit }: { to: number; unit?: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -64,7 +94,7 @@ function CountUp({ to, unit }: { to: number; unit?: string }) {
   );
 }
 
-export default function ChapterV2({ chapter, index, active, onExplore }: Props) {
+export default function ChapterV2({ chapter, index, active, onExplore, stats }: Props) {
   const isHero = chapter.id === "intro";
   const isOutro = chapter.id === "outro";
   const style = { "--c": chapter.color ?? "#E0A458" } as CSSProperties;
@@ -82,15 +112,19 @@ export default function ChapterV2({ chapter, index, active, onExplore }: Props) 
             <h1 className="v2-h1">Jakarta</h1>
             <p className="v2-sub">Lima wajah, satu kota</p>
             <p className="v2-body">{chapter.body}</p>
-            <div className="v2-stats">
-              {STATS.map((s) => (
-                <div className="v2-tile" key={s.label}>
-                  <CountUp to={s.to} unit={s.unit} />
-                  <div className="v2-tile-label">{s.label}</div>
+            {stats && (
+              <>
+                <div className="v2-stats">
+                  {statTiles(stats).map((s) => (
+                    <div className="v2-tile" key={s.label}>
+                      <CountUp to={s.to} unit={s.unit} />
+                      <div className="v2-tile-label">{s.label}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="v2-stats-src"><Icon n="db" /> Agregat atribut layer — bukan data baru</div>
+                <div className="v2-stats-src"><Icon n="db" /> Dihitung langsung dari data GeoJSON peta</div>
+              </>
+            )}
           </>
         ) : isOutro ? (
           <>
@@ -117,11 +151,7 @@ export default function ChapterV2({ chapter, index, active, onExplore }: Props) 
             {n > 0 && (
               <div className={`v2-photo n${n}`}>
                 {chapter.photos.map((p) => (
-                  <figure key={p.src}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.src} alt={p.caption} loading="lazy" style={{ objectPosition: p.position ?? "center" }} />
-                    <figcaption aria-hidden="true">{p.caption}</figcaption>
-                  </figure>
+                  <ChapterPhoto key={p.src} photo={p} />
                 ))}
               </div>
             )}

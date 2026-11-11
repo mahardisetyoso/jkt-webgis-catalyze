@@ -15,13 +15,23 @@ import {
 } from "@/lib/mapLayers";
 import type { MapView } from "@/lib/mapViews";
 
+export type MapStatus = "loading" | "ready" | "error";
+
 type Props = {
   activeDistrictId: string | null;
   view: MapView;
   mode: Mode;
   showAllLandmarks: boolean;
   reducedMotion: boolean;
+  // Reports when the map is usable or when its essential data failed to load.
+  onStatus?: (status: MapStatus) => void;
 };
+
+// The map is "broken" when it never finishes loading within this window.
+const LOAD_TIMEOUT_MS = 20000;
+
+// Layers whose failure leaves nothing to look at (basemap tile misses do not).
+const DATA_SOURCES = new Set(["districts", "landmarks"]);
 
 // Explore shows every landmark (null filter); the story shows only the active
 // district's.
@@ -57,7 +67,10 @@ export default function MapCanvas({
   mode,
   showAllLandmarks,
   reducedMotion,
+  onStatus,
 }: Props) {
+  const statusRef = useRef(onStatus);
+  statusRef.current = onStatus;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -127,11 +140,27 @@ export default function MapCanvas({
       offset: 10,
     });
 
-    map.on("error", (e) =>
-      console.warn("[MapCanvas] map error:", e?.error?.message ?? e),
+    let loadTimer: ReturnType<typeof setTimeout> | undefined = setTimeout(
+      () => statusRef.current?.("error"),
+      LOAD_TIMEOUT_MS,
     );
+    const clearLoadTimer = () => {
+      if (loadTimer) clearTimeout(loadTimer);
+      loadTimer = undefined;
+    };
+
+    map.on("error", (e) => {
+      console.warn("[MapCanvas] map error:", e?.error?.message ?? e);
+      const sourceId = (e as { sourceId?: string } | undefined)?.sourceId;
+      // Essential data failed, or the style itself never arrived (no sourceId
+      // before load). Individual basemap tile misses are not fatal.
+      if ((sourceId && DATA_SOURCES.has(sourceId)) || (!sourceId && !readyRef.current)) {
+        statusRef.current?.("error");
+      }
+    });
 
     map.on("load", () => {
+      clearLoadTimer();
       map.addSource("districts", {
         type: "geojson",
         data: "/data/jakarta-districts.geojson",
@@ -222,9 +251,11 @@ export default function MapCanvas({
         ),
       );
       setInteraction(map, mapInteractive(propsRef.current.mode));
+      statusRef.current?.("ready");
     });
 
     return () => {
+      clearLoadTimer();
       map.remove();
       mapRef.current = null;
       readyRef.current = false;
